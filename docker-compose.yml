@@ -1,5 +1,5 @@
 services:
-  mongo:
+  service_mongo:
     image: mongo:7
     restart: unless-stopped
     ports:
@@ -15,9 +15,11 @@ services:
     ports: 
       - "5000:5000"
     environment:
-      - MONGODB_URI=${MONGODB_URI}
+      - MONGODB_URI=mongodb://service_mongo:27017/pennywise_db?
+    links:
+      - service_mongo
     depends_on:
-      - mongo
+      - service_mongo
 
   frontend:
     build:
