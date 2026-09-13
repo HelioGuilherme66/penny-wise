@@ -47,7 +47,7 @@ Before submitting your changes, you can run the following scripts from either `/
 ### Configuring Git Hook
 
 You should configure the git hook to automatically run the linter or formatter.
-We use [prettier lefthook](https://prettier.io/docs/precommit#option-5-lefthook) .
+Copy `.example_git_hooks_lefthook.yml` to `.git/hooks/lefthook.yml` at the repository root, then run `npx lefthook install` from the root to register the git hooks. Reference, [prettier lefthook](https://prettier.io/docs/precommit#option-5-lefthook).
 
 ---
 
