@@ -44,6 +44,11 @@ Before submitting your changes, you can run the following scripts from either `/
 - `npm run format:check` to make sure the style in your changes correspond to the guidelines,
 - `npm run format` to automatically format your code according to the rules.
 
+### Configuring Git Hook
+
+You should configure the git hook to automatically run the linter or formatter.
+We use [prettier lefthook](https://prettier.io/docs/precommit#option-5-lefthook) .
+
 ---
 
 If anything here is still unclear, please reach out to the team's Discord channel.

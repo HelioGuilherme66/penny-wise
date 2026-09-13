@@ -1,0 +1,15 @@
+pre-commit:
+  parallel: true
+  jobs:
+    - name: prettier
+      run: npx prettier --ignore-unknown --write '{staged_files}'
+      glob: "*.css"
+      stage_fixed: true
+
+    - run: npx eslint --fix '{staged_files}'
+      glob:
+        - "*.ts"
+        - "*.js"
+        - "*.tsx"
+        - "*.jsx"
+      stage_fixed: true
