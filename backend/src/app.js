@@ -6,6 +6,8 @@ const coursesRouter = require('./routes/courses');
 const countriesRouter = require('./routes/countries');
 const userRouter = require('./routes/user');
 const authRoutes = require('./routes/auth');
+const mongoose = require('mongoose');
+const studio = require('@mongoosejs/studio/express');
 
 const clientOrigin = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
 
@@ -34,6 +36,18 @@ function createApp() {
   app.use('/api/countries', countriesRouter);
   app.use('/api/user', userRouter);
 
+  const connection = mongoose.createConnection('mongodb://service_mongo:27017/pennywise_db');
+  // 3. Mount Mongoose Studio UI and API handlers
+  // Note: Wrap the setup in an async context or mount via a custom wrapper route since studio() returns a Promise
+  app.use('/studio', async (req, res, next) => {
+    try {
+      const studioMiddleware = await studio('/studio/api', mongoose);
+      studioMiddleware(req, res, next);
+    } catch (err) {
+      next(err);
+    }
+  });
+  
   app.use((req, res) => {
     res.status(404).json({ error: 'Not found' });
   });
