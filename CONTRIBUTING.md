@@ -44,6 +44,14 @@ Before submitting your changes, you can run the following scripts from either `/
 - `npm run format:check` to make sure the style in your changes correspond to the guidelines,
 - `npm run format` to automatically format your code according to the rules.
 
+## Develop Branch
+
+The `develop` branch contains some tools to help the development of Penny Wise.
+
+- [Mongoose Studio](https://github.com/Automattic/mongoose#mongoose-studio) access with [http://localhost:5000/studio](http://localhost:5000/studio).
+- [Swagger Editor, UI and Codegen](https://swagger.io/docs/open-source-tools/swagger-editor/) For the moment configured with `pet-shop` project.
+- [Mongoose to Swagger](https://www.npmjs.com/package/mongoose-to-swagger) Node module to export from mongoose to swagger/openapi.
+
 ---
 
 If anything here is still unclear, please reach out to the team's Discord channel.

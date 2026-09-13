@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const coursesRouter = require('./routes/courses');
+const mongoose = require('mongoose');
+const studio = require('@mongoosejs/studio/express');
 
 function createApp() {
   const app = express();
@@ -19,6 +21,18 @@ function createApp() {
 
   app.use('/api/courses', coursesRouter);
 
+  const connection = mongoose.createConnection('mongodb://service_mongo:27017/pennywise_db');
+  // 3. Mount Mongoose Studio UI and API handlers
+  // Note: Wrap the setup in an async context or mount via a custom wrapper route since studio() returns a Promise
+  app.use('/studio', async (req, res, next) => {
+    try {
+      const studioMiddleware = await studio('/studio/api', mongoose);
+      studioMiddleware(req, res, next);
+    } catch (err) {
+      next(err);
+    }
+  });
+  
   app.use((req, res) => {
     res.status(404).json({ error: 'Not found' });
   });
