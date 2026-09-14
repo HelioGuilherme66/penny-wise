@@ -8,14 +8,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Ekomjah/penny-wise.git"
+    "url": "git+https://github.com/freeCodeCamp-Summer-Cohort-2026/penny-wise.git"
   },
   "keywords": [],
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/Ekomjah/penny-wise/issues"
+    "url": "https://github.com/freeCodeCamp-Summer-Cohort-2026/penny-wise/issues"
   },
-  "homepage": "https://github.com/Ekomjah/penny-wise#readme",
+  "homepage": "https://github.com/freeCodeCamp-Summer-Cohort-2026/penny-wise#readme",
   "devDependencies": {
     "lefthook": "^2.1.14"
   },
