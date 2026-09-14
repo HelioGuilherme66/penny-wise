@@ -1,6 +1,5 @@
 const request = require('supertest');
 const { createApp } = require('../app');
-const mongoose = require('mongoose');
 
 const app = createApp();
 
@@ -10,7 +9,7 @@ describe('Basic tests', () => {
 
     expect(res.status).toBe(200);
     console.log(res.body);
-    // expect(res.body).toMatch("Hello World");
+    expect(res.body).toMatchObject({});
   });
 
   it('get /api/health', async () => {
