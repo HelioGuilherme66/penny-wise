@@ -1,0 +1,44 @@
+pre-commit:
+  parallel: false
+  jobs:
+    - name: backend-prettier
+      root: "backend/"
+      run: npx prettier --ignore-unknown --write '{staged_files}'
+      glob:
+        - "backend/**/*.css"
+        - "backend/**/*.ts"
+        - "backend/**/*.js"
+        - "backend/**/*.tsx"
+        - "backend/**/*.jsx"
+      stage_fixed: true
+
+    - name: backend-eslint
+      root: "backend/"
+      run: npx eslint --fix '{staged_files}'
+      glob:
+        - "backend/**/*.ts"
+        - "backend/**/*.js"
+        - "backend/**/*.tsx"
+        - "backend/**/*.jsx"
+      stage_fixed: true
+
+    - name: frontend-prettier
+      root: "frontend/"
+      run: npx prettier --ignore-unknown --write '{staged_files}'
+      glob:
+        - "frontend/**/*.css"
+        - "frontend/**/*.ts"
+        - "frontend/**/*.js"
+        - "frontend/**/*.tsx"
+        - "frontend/**/*.jsx"
+      stage_fixed: true
+
+    - name: frontend-eslint
+      root: "frontend/"
+      run: npx eslint --fix '{staged_files}'
+      glob:
+        - "frontend/**/*.ts"
+        - "frontend/**/*.js"
+        - "frontend/**/*.tsx"
+        - "frontend/**/*.jsx"
+      stage_fixed: true
