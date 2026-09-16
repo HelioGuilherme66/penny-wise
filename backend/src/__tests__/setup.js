@@ -9,7 +9,7 @@ async function setupTestDB() {
   const uri = mongoServer.getUri();
   await mongoose.connect(uri);
   console.log(uri);
-  seed(uri);
+  await seed(uri);
 }
 
 async function teardownTestDB() {
