@@ -1,0 +1,25 @@
+{
+  "name": "penny-wise",
+  "version": "1.0.0",
+  "description": "Penny wise is a simple yet intuitive finance literacy app, targeted to a an audience of teens/pre-teens, who are learning the use of money in the real world, how to use it and how to spend it wisely. The app begins with the basics - counting money, making change, simple budgeting, through short two-minute Tutorials and longer open-ended Labs. It's a general-purpose teaching engine, not a fixed curriculum - and it's meant to stay at everyday-basics level, not investing/credit/taxes territory.",
+  "main": "index.js",
+  "scripts": {
+    "lefthook": "lefthook"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/freeCodeCamp-Summer-Cohort-2026/penny-wise.git"
+  },
+  "keywords": [],
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/freeCodeCamp-Summer-Cohort-2026/penny-wise/issues"
+  },
+  "homepage": "https://github.com/freeCodeCamp-Summer-Cohort-2026/penny-wise#readme",
+  "devDependencies": {
+    "lefthook": "^2.1.14"
+  },
+  "allowScripts": {
+    "lefthook@2.1.14": true
+  }
+}

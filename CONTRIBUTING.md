@@ -44,6 +44,16 @@ Before submitting your changes, you can run the following scripts from either `/
 - `npm run format:check` to make sure the style in your changes correspond to the guidelines,
 - `npm run format` to automatically format your code according to the rules.
 
+### Configuring Git Hook
+
+You should configure the git hook to automatically run the linter or formatter.
+`cd` to the root dir of this repo, run `npm install`, then run `npx lefthook install` from the root to register the git hooks.
+Now, all changes are automatically linted and formatted before being committed.
+
+To lint the entire repo manually, run `npm run lefthook -- run pre-commit`
+
+Reference, [prettier lefthook](https://prettier.io/docs/precommit#option-5-lefthook).
+
 ## Develop Branch
 
 The `develop` branch contains some tools to help the development of Penny Wise.
