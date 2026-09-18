@@ -1,67 +1,30 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const { Schema } = mongoose;
 
-const userSchema = new mongoose.Schema(
+const baseOptions = {
+  discriminatorKey: 'role',
+  collection: 'users',
+  timestamps: true,
+};
+
+const userSchema = new Schema(
   {
+    displayName: { type: String, required: true, trim: true },
     email: {
       type: String,
       required: true,
       unique: true,
+      trim: true,
       lowercase: true,
-      trim: true,
     },
-    displayName: {
-      type: String,
-      required: true,
-      trim: true,
-      maxlength: 100,
-    },
-    passwordHash: {
-      type: String,
-      required: true,
-    },
-    role: {
-      type: String,
-      enum: ['learner', 'author'],
-      default: 'learner',
-    },
-    coursesEnrolled: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Course' }],
-    coursesCreated: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Course' }],
-    currentStreak: {
-      type: Number,
-      default: 0,
-    },
-    longestStreak: {
-      type: Number,
-      default: 0,
-    },
-    profilePicUrl: {
-      type: String,
-      default: 'default-profile-pic.png',
-    },
-    level: {
-      type: Number,
-      default: 1,
-    },
-    experience: {
-      type: Number,
-      default: 0,
-    },
-    currentLives: {
-      type: Number,
-      default: 5,
-      min: 0,
-    },
-    country: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Country',
-    },
+    passwordHash: { type: String, required: true },
+    profilePic: { type: String, default: 'default-profile.png' },
+    country: { type: String, trim: true },
   },
-  { timestamps: true },
+  baseOptions,
 );
 
-// TOOK THESE FROM PULSEBOARD
-// DON'T KNOW WHAT WE'RE DOING FOR AUTHENTICATION
 userSchema.methods.comparePassword = function comparePassword(candidate) {
   return bcrypt.compare(candidate, this.passwordHash);
 };
@@ -77,4 +40,34 @@ userSchema.methods.toJSON = function toJSON() {
   return obj;
 };
 
-module.exports = mongoose.model('User', userSchema);
+const User = mongoose.model('User', userSchema);
+
+const Learner = User.discriminator(
+  'learner',
+  new Schema({
+    coursesEnrolled: [{ type: Schema.Types.ObjectId, ref: 'Course' }],
+    currentStreak: { type: Number, default: 0 },
+    longestStreak: { type: Number, default: 0 },
+    level: { type: Number, default: 1, min: 1 },
+    experience: { type: Number, default: 0, min: 0 },
+    currentLives: { type: Number, default: 5, min: 0 },
+
+    completedLessons: [
+      {
+        lessonId: { type: Schema.Types.ObjectId, ref: 'Lesson' },
+        score: { type: Number, default: 0 },
+        completedAt: { type: Date, default: Date.now },
+      },
+    ],
+  }),
+);
+
+const Author = User.discriminator(
+  'author',
+  new Schema({
+    coursesMade: [{ type: Schema.Types.ObjectId, ref: 'Course' }],
+    bio: { type: String, trim: true, maxlength: 500 },
+  }),
+);
+
+module.exports = { User, Learner, Author };

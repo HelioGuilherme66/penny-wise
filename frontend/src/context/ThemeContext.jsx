@@ -1,32 +1,36 @@
-import { createContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useLayoutEffect, useState } from 'react';
 
+// eslint-disable-next-line
 export const ThemeContext = createContext(undefined);
 
+function getInitialTheme() {
+  if (typeof window === 'undefined') return 'light';
+  const storedTheme = window.localStorage.getItem('theme');
+  if (storedTheme === 'dark' || storedTheme === 'light') return storedTheme;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches
+    ? 'dark'
+    : 'light';
+}
+
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState('light');
+  const [theme, setTheme] = useState(getInitialTheme);
 
-  useEffect(() => {
-    const storedTheme = localStorage.getItem('theme');
+  // Apply before paint to avoid a frame of the wrong theme.
+  useLayoutEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+  }, [theme]);
 
-    const prefersDark = window.matchMedia(
-      '(prefers-color-scheme: dark)',
-    ).matches;
-
-    const initialTheme = storedTheme || (prefersDark ? 'dark' : 'light');
-
-    setTheme(initialTheme);
-
-    document.documentElement.classList.toggle('dark', initialTheme === 'dark');
+  const toggleTheme = useCallback(() => {
+    setTheme((prev) => {
+      const newTheme = prev === 'light' ? 'dark' : 'light';
+      try {
+        window.localStorage.setItem('theme', newTheme);
+      } catch {
+        // ignore write failures (e.g. private mode)
+      }
+      return newTheme;
+    });
   }, []);
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-
-    document.documentElement.classList.toggle('dark', newTheme === 'dark');
-  };
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
