@@ -1,0 +1,506 @@
+{
+  "openapi" : "3.0.4",
+  "info" : {
+    "title" : "Penny Wise - Economy Literacy Helper",
+    "description" : "This is a project created during the Summer Cohort in 20226 from [https://freecodecamp.org](https://freecodecamp.org). It is aimed for preteens and teenagers, and the goal is to teach basic economy literacy in a interactive way, which we hope to be a pleasant experience. Because the users are children we advise the parents or tutors to be side by side, with the learners.",
+    "termsOfService" : "https://freecodecamp.org/terms/",
+    "contact" : {
+      "email" : "pennywise@example.com"
+    },
+    "license" : {
+      "name" : "Apache 2.0",
+      "url" : "https://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "version" : "1.0.0"
+  },
+  "externalDocs" : {
+    "description" : "Find out more about FreeCodeCamp",
+    "url" : "https://freecodecamp.org"
+  },
+  "servers" : [ {
+    "url" : "https://localhost/api/health"
+  } ],
+  "tags" : [ 
+{
+  "title": "Author",
+  "required": [
+    "email",
+    "displayName",
+    "passwordHash"
+  ],
+  "properties": {
+    "email": {
+      "type": "string"
+    },
+    "displayName": {
+      "type": "string"
+    },
+    "passwordHash": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string"
+    },
+    "profilePicUrl": {
+      "type": "string"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+},
+{
+  "title": "Country",
+  "required": [
+    "name"
+  ],
+  "properties": {
+    "name": {
+      "type": "string"
+    }
+  }
+},
+{
+  "title": "Course",
+  "required": [
+    "creatorId",
+    "name"
+  ],
+  "properties": {
+    "creatorId": {
+      "type": "schemaobjectid"
+    },
+    "name": {
+      "type": "string"
+    },
+    "lessons": {
+      "type": "array",
+      "items": {
+        "type": "schemaobjectid"
+      }
+    },
+    "published": {
+      "type": "boolean"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+},
+{
+  "title": "Lesson",
+  "required": [
+    "courseId",
+    "name",
+    "description"
+  ],
+  "properties": {
+    "courseId": {
+      "type": "schemaobjectid"
+    },
+    "name": {
+      "type": "string"
+    },
+    "experience": {
+      "type": "number"
+    },
+    "pages": {
+      "type": "array",
+      "items": {
+        "type": "schemaobjectid"
+      }
+    },
+    "estimatedDurationOfCompletionInMinutes": {
+      "type": "number"
+    },
+    "description": {
+      "type": "string"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+},
+{
+  "title": "Money",
+  "required": [
+    "name",
+    "country"
+  ],
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "coins": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "number"
+          },
+          "image": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "value",
+          "image"
+        ]
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "number"
+          },
+          "image": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "value",
+          "image"
+        ]
+      }
+    },
+    "country": {
+      "type": "schemaobjectid"
+    }
+  }
+},
+{
+  "title": "Page",
+  "required": [
+    "lessonId",
+    "text"
+  ],
+  "properties": {
+    "lessonId": {
+      "type": "schemaobjectid"
+    },
+    "text": {
+      "type": "string"
+    },
+    "imageUrl": {
+      "type": "string"
+    },
+    "audioUrl": {
+      "type": "string"
+    },
+    "incorrectMessage": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string"
+    }
+  }
+},
+{
+  "title": "multiple_choice",
+  "required": [
+    "lessonId",
+    "text"
+  ],
+  "properties": {
+    "lessonId": {
+      "type": "schemaobjectid"
+    },
+    "text": {
+      "type": "string"
+    },
+    "imageUrl": {
+      "type": "string"
+    },
+    "audioUrl": {
+      "type": "string"
+    },
+    "incorrectMessage": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string"
+    },
+    "options": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "answerText": {
+            "type": "string"
+          },
+          "isCorrect": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "answerText"
+        ]
+      }
+    }
+  }
+},
+{
+  "title": "matching",
+  "required": [
+    "lessonId",
+    "text"
+  ],
+  "properties": {
+    "lessonId": {
+      "type": "schemaobjectid"
+    },
+    "text": {
+      "type": "string"
+    },
+    "imageUrl": {
+      "type": "string"
+    },
+    "audioUrl": {
+      "type": "string"
+    },
+    "incorrectMessage": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string"
+    },
+    "pairs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "word": {
+            "type": "string"
+          },
+          "definition": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "word",
+          "definition"
+        ]
+      }
+    }
+  }
+},
+{
+  "title": "budgeting",
+  "required": [
+    "lessonId",
+    "text",
+    "startingAmount"
+  ],
+  "properties": {
+    "lessonId": {
+      "type": "schemaobjectid"
+    },
+    "text": {
+      "type": "string"
+    },
+    "imageUrl": {
+      "type": "string"
+    },
+    "audioUrl": {
+      "type": "string"
+    },
+    "incorrectMessage": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string"
+    },
+    "startingAmount": {
+      "type": "number"
+    },
+    "targetSavings": {
+      "type": "number"
+    },
+    "availableItems": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "cost": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "cost"
+        ]
+      }
+    }
+  }
+},
+{
+  "title": "wants_needs",
+  "required": [
+    "lessonId",
+    "text"
+  ],
+  "properties": {
+    "lessonId": {
+      "type": "schemaobjectid"
+    },
+    "text": {
+      "type": "string"
+    },
+    "imageUrl": {
+      "type": "string"
+    },
+    "audioUrl": {
+      "type": "string"
+    },
+    "incorrectMessage": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string"
+    },
+    "itemsToSort": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "correctCategory": {
+            "type": "string",
+            "enum": [
+              "want",
+              "need"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "correctCategory"
+        ]
+      }
+    }
+  }
+},
+{
+  "title": "User",
+  "required": [
+    "email",
+    "displayName",
+    "passwordHash"
+  ],
+  "properties": {
+    "email": {
+      "type": "string"
+    },
+    "displayName": {
+      "type": "string"
+    },
+    "passwordHash": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "learner",
+        "author"
+      ]
+    },
+    "coursesEnrolled": {
+      "type": "array",
+      "items": {
+        "type": "schemaobjectid"
+      }
+    },
+    "coursesCreated": {
+      "type": "array",
+      "items": {
+        "type": "schemaobjectid"
+      }
+    },
+    "currentStreak": {
+      "type": "number"
+    },
+    "longestStreak": {
+      "type": "number"
+    },
+    "profilePicUrl": {
+      "type": "string"
+    },
+    "level": {
+      "type": "number"
+    },
+    "experience": {
+      "type": "number"
+    },
+    "currentLives": {
+      "type": "number"
+    },
+    "country": {
+      "type": "schemaobjectid"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+},
+{
+  "title": "Wallet",
+  "required": [
+    "user",
+    "total",
+    "country",
+    "denominations",
+    "type"
+  ],
+  "properties": {
+    "user": {
+      "type": "schemaobjectid"
+    },
+    "total": {
+      "type": "number"
+    },
+    "country": {
+      "type": "schemaobjectid"
+    },
+    "denominations": {
+      "type": "schemaobjectid"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "immediate",
+        "long-term"
+      ]
+    }
+  }
+}]
+}
+
