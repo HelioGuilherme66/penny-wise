@@ -1,9 +1,10 @@
 require('dotenv').config();
+const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
 const { connectDB } = require('../src/config/db');
 const Country = require('../src/models/country');
 const Money = require('../src/models/money');
-const User = require('../src/models/User');
+const { Author, Learner } = require('../src/models/User');
 const Course = require('../src/models/Course');
 const Lesson = require('../src/models/Lesson');
 const { Page } = require('../src/models/Page');
@@ -12,12 +13,20 @@ const Wallet = require('../src/models/wallet');
 const DEMO_PASSWORD = 'PennyWise-123';
 const USD_COUNTRY = 'United States';
 
-const SEED_USERS = [
+const SEED_AUTHORS = [
   {
     email: 'author@pennywise.app',
     displayName: 'Ama Author',
     role: 'author',
   },
+  {
+    email: 'anotherauthor@pennywise.app',
+    displayName: 'Another Author',
+    role: 'author',
+  },
+];
+
+const SEED_USERS = [
   {
     email: 'learn.sara@pennywise.app',
     displayName: 'Sara Ekon',
@@ -326,6 +335,10 @@ async function dropLegacyCollections() {
   }
 }
 
+async function hashPassword(plain) {
+  return bcrypt.hash(plain, 10);
+}
+
 async function seed({ mongoUri } = {}) {
   await connectDB(mongoUri);
 
@@ -353,9 +366,8 @@ async function seed({ mongoUri } = {}) {
 
   const usersByEmail = {};
   for (const seedUser of SEED_USERS) {
-    const passwordHash = await User.hashPassword(DEMO_PASSWORD);
-    const user = await User.findOneAndUpdate(
-      { email: seedUser.email },
+    const passwordHash = await hashPassword(DEMO_PASSWORD);
+    const user = await Learner.create(
       {
         email: seedUser.email,
         displayName: seedUser.displayName,
@@ -368,6 +380,24 @@ async function seed({ mongoUri } = {}) {
       { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true },
     );
     usersByEmail[seedUser.email] = user;
+  }
+
+  const authorsByEmail = {};
+  for (const seedAuthor of SEED_AUTHORS) {
+    const passwordHash = await hashPassword(DEMO_PASSWORD);
+    const author = await Author.create(
+      {
+        email: seedAuthor.email,
+        displayName: seedAuthor.displayName,
+        role: seedAuthor.role,
+        passwordHash,
+        country: country._id,
+        coursesEnrolled: [],
+        coursesCreated: [],
+      },
+      { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true },
+    );
+    authorsByEmail[seedAuthor.email] = author;
   }
 
   const courses = [];
