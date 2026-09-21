@@ -178,7 +178,7 @@ const SEED_COURSES = [
   },
   {
     name: 'Smart Spending',
-    creatorEmail: 'author@pennywise.app',
+    creatorEmail: 'anotherauthor@pennywise.app',
     published: true,
     lessons: [
       {
@@ -367,12 +367,13 @@ async function seed({ mongoUri } = {}) {
   const usersByEmail = {};
   for (const seedUser of SEED_USERS) {
     const passwordHash = await hashPassword(DEMO_PASSWORD);
-    const user = await Learner.create(
+    const user = await Learner.findOneAndUpdate(
+      { email: seedUser.email },
       {
         email: seedUser.email,
         displayName: seedUser.displayName,
         role: seedUser.role,
-        passwordHash,
+        passwordHash: passwordHash,
         country: country._id,
         coursesEnrolled: [],
         coursesCreated: [],
@@ -385,12 +386,13 @@ async function seed({ mongoUri } = {}) {
   const authorsByEmail = {};
   for (const seedAuthor of SEED_AUTHORS) {
     const passwordHash = await hashPassword(DEMO_PASSWORD);
-    const author = await Author.create(
+    const author = await Author.findOneAndUpdate(
+      { email: seedAuthor.email },
       {
         email: seedAuthor.email,
         displayName: seedAuthor.displayName,
         role: seedAuthor.role,
-        passwordHash,
+        passwordHash: passwordHash,
         country: country._id,
         coursesEnrolled: [],
         coursesCreated: [],
@@ -404,7 +406,7 @@ async function seed({ mongoUri } = {}) {
   let lessonCount = 0;
   let pageCount = 0;
   for (const courseData of SEED_COURSES) {
-    const creator = usersByEmail[courseData.creatorEmail];
+    const creator = authorsByEmail[courseData.creatorEmail];
     const course = await Course.create({
       creatorId: creator._id,
       name: courseData.name,
@@ -451,8 +453,8 @@ async function seed({ mongoUri } = {}) {
     await course.save();
     courses.push(course);
 
-    creator.coursesCreated.push(course._id);
-    await creator.save();
+    // creator.coursesCreated.push(course._id);
+    // await creator.save();
   }
 
   const learners = SEED_USERS.filter((u) => u.role === 'learner').map(
@@ -479,6 +481,7 @@ async function seed({ mongoUri } = {}) {
     `  Money   : ${money.name} (${money.coins.length} coins, ${money.notes.length} notes)`,
   );
   console.log(`  Users   : ${SEED_USERS.map((u) => u.email).join(', ')}`);
+  console.log(`  Author  : ${SEED_AUTHORS.map((u) => u.email).join(', ')}`);
   console.log(`             password: ${DEMO_PASSWORD}`);
   console.log(
     `  Courses : ${courses.map((c) => c.name).join(', ')} (${lessonCount} lessons, ${pageCount} pages)`,
@@ -490,6 +493,7 @@ async function seed({ mongoUri } = {}) {
     country,
     money,
     usersByEmail,
+    authorsByEmail,
     courses,
     lessonCount,
     pageCount,

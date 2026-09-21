@@ -30,7 +30,9 @@ function createApp() {
   // Note: Wrap the setup in an async context or mount via a custom wrapper route since studio() returns a Promise
   app.use('/studio', async (req, res, next) => {
     try {
-      const studioMiddleware = await studio('/studio/api', connection);
+      const studioMiddleware = await studio('/studio/api', connection, {
+        bindIp: '127.0.0.1,192.168.4.182',
+      });
       studioMiddleware(req, res, next);
     } catch (err) {
       next(err);

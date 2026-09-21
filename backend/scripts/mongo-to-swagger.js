@@ -39,7 +39,7 @@ const header = `{
     "url" : "https://freecodecamp.org"
   },
   "servers" : [ {
-    "url" : "https://localhost/api/health"
+    "url" : "http://localhost:5000/api/health"
   } ],
   "tags" : [ `;
 

@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
-const { Schema, model } = mongoose;
 
-const moneySchema = new Schema({
+const moneySchema = new mongoose.Schema({
   name: { type: String, required: true, default: 'United States Dollar' },
   coins: [
     {
@@ -16,10 +15,10 @@ const moneySchema = new Schema({
     },
   ],
   country: {
-    type: Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'Country',
     required: true,
   },
 });
 
-module.exports = model('Money', moneySchema);
+module.exports = mongoose.model('Money', moneySchema);

@@ -62,6 +62,15 @@ The `develop` branch contains some tools to help the development of Penny Wise.
 - [Swagger Editor, UI and Codegen](https://swagger.io/docs/open-source-tools/swagger-editor/) For the moment configured with `pet-shop` project.
 - [Mongoose to Swagger](https://www.npmjs.com/package/mongoose-to-swagger) Node module to export from mongoose to swagger/openapi.
 
+### Swagger Editor
+Pre-built DockerHub image
+
+SwaggerEditor is available as a pre-built docker image hosted on docker.swagger.io.
+
+```
+$ docker pull docker.io/swaggerapi/swagger-editor:latest
+$ docker run -d -p 8080:80 --name swagger-editor docker.io/swaggerapi/swagger-editor:latest
+```
 ---
 
 If anything here is still unclear, please reach out to the team's Discord channel.

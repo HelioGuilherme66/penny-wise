@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const { Schema } = mongoose;
 
 const baseOptions = {
   discriminatorKey: 'role',
@@ -8,7 +7,7 @@ const baseOptions = {
   timestamps: true,
 };
 
-const userSchema = new Schema(
+const userSchema = new mongoose.Schema(
   {
     displayName: { type: String, required: true, trim: true },
     email: {
@@ -44,8 +43,8 @@ const User = mongoose.model('User', userSchema);
 
 const Learner = User.discriminator(
   'learner',
-  new Schema({
-    coursesEnrolled: [{ type: Schema.Types.ObjectId, ref: 'Course' }],
+  new mongoose.Schema({
+    coursesEnrolled: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Course' }],
     currentStreak: { type: Number, default: 0 },
     longestStreak: { type: Number, default: 0 },
     level: { type: Number, default: 1, min: 1 },
@@ -54,7 +53,7 @@ const Learner = User.discriminator(
 
     completedLessons: [
       {
-        lessonId: { type: Schema.Types.ObjectId, ref: 'Lesson' },
+        lessonId: { type: mongoose.Schema.Types.ObjectId, ref: 'Lesson' },
         score: { type: Number, default: 0 },
         completedAt: { type: Date, default: Date.now },
       },
@@ -64,8 +63,8 @@ const Learner = User.discriminator(
 
 const Author = User.discriminator(
   'author',
-  new Schema({
-    coursesMade: [{ type: Schema.Types.ObjectId, ref: 'Course' }],
+  new mongoose.Schema({
+    coursesMade: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Course' }],
     bio: { type: String, trim: true, maxlength: 500 },
   }),
 );
