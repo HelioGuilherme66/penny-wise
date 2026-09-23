@@ -5,7 +5,7 @@ require('../models/Page');
 
 const router = express.Router();
 
-router.get('/courses', async (req, res, next) => {
+router.get('/', async (req, res, next) => {
   try {
     const courses = await Course.find({ published: true })
       .populate({ path: 'lessons', populate: { path: 'pages' } })
