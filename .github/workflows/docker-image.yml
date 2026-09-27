@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: Test Penny Wise
 
 on:
   push:
@@ -14,7 +14,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Build the Docker image
+    - name: Build penny wise and test
       run: |
         cp .env_example .env
         sed -i "s/<db_atlas_user>/${{ secrets.ATLAS_USER }}/g" .env
@@ -23,5 +23,7 @@ jobs:
         sed -i "s/_backend_1/-backend-1/g" package.json
         npm install
         npm run start
-        sleep 10
+        until [ `curl -s http://localhost:5000/api/health && [ $? -eq 0 ]` ]; do
+            sleep 0.4;
+        done
         npm run seed_n_test
