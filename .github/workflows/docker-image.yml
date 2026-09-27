@@ -23,8 +23,5 @@ jobs:
         sed -i "s/_backend_1/-backend-1/g" package.json
         npm install
         npm run start
-        docker exec penny-wise-backend-1 bash -c "apt update && apt install -y curl"
-        until [ `curl -s http://localhost:5000/api/health && [ $? -eq 0 ]` ]; do
-            sleep 0.4;
-        done
+        docker exec penny-wise-backend-1 bash -c "until [ `curl -s http://localhost:5000/api/health && [ $? -eq 0 ]` ]; do sleep 0.4; done"
         npm run seed_n_test

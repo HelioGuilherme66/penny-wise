@@ -1,5 +1,7 @@
 FROM node:22-slim AS prod
 
+RUN apt update && apt install -y curl
+
 WORKDIR /app
 
 COPY package*.json ./
@@ -15,6 +17,8 @@ EXPOSE 5000
 CMD ["node", "src/server.js"]
 
 FROM node:22-slim AS dev
+
+RUN apt update && apt install -y curl
 
 WORKDIR /src
 
