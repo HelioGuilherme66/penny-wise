@@ -11,6 +11,9 @@ const sanitizeUser = (user) => ({
   email: user.email,
   displayName: user.displayName,
   role: user.role,
+  level: user.level,
+  avatar: user.profilePic,
+  country: user.country,
 });
 
 const registerLimiter =

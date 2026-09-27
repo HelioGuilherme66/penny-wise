@@ -1,8 +1,12 @@
 FROM node:22-slim AS prod
 
+RUN apt update && apt install -y curl
+
 WORKDIR /app
 
 COPY package*.json ./
+
+RUN npm install -g npm@12.1.0
 
 RUN npm install --omit=dev
 
@@ -14,11 +18,15 @@ CMD ["node", "src/server.js"]
 
 FROM node:22-slim AS dev
 
+RUN apt update && apt install -y curl
+
 WORKDIR /src
 
 ENV PORT=5000
 
 COPY package*.json ./
+
+RUN npm install -g npm@12.1.0
 
 RUN npm install
 
