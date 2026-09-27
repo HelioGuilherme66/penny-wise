@@ -16,6 +16,10 @@ jobs:
     - uses: actions/checkout@v4
     - name: Build the Docker image
       run: |
+        cp .env_example .env
+        sed -i "s/<db_atlas_user>/${{ secrets.ATLAS_USER }}/g" .env
+        sed -i "s/<password>/${{ secrets.ATLAS_PASSWORD }}/g" .env
+        sed -i "s/<mongodb_atlas_cluster>/${{ secrets.ATLAS_CLUSTER }}/g" .env
         sed -i "s/_backend_1/-backend-1/g" package.json
         npm install
         npm run start
