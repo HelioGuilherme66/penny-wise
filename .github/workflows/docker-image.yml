@@ -1,0 +1,32 @@
+name: Test Penny Wise
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build penny wise and test
+      env:
+        ATLAS_USER: ${{ secrets.ATLAS_USER }}
+        ATLAS_PASSWORD: ${{ secrets.ATLAS_PASSWORD }}
+        ATLAS_CLUSTER: ${{ secrets.ATLAS_CLUSTER }}
+      run: |
+        cp .env_example .env
+        sed -i "s/<db_atlas_user>/${ATLAS_USER}/g" .env
+        sed -i "s/<password>/${ATLAS_PASSWORD}/g" .env
+        sed -i "s/<mongodb_atlas_cluster>/${ATLAS_CLUSTER}/g" .env
+        sed -i "s/_backend_1/-backend-1/g" package.json
+        npm install
+        npm run start
+        docker exec penny-wise-backend-1 bash -c "until curl -sf http://localhost:5000/api/health; do sleep 4; done"
+        npm run seed_n_test
