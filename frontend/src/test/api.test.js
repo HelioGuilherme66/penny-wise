@@ -1,8 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AUTH_STORAGE_KEY, saveAuth } from '../lib/authStorage';
+import { describe, expect, it, vi } from 'vitest';
 import {
   api,
-  attachAuthToken,
+  AUTH_EXPIRED_EVENT,
   handleApiError,
   normalizeApiError,
 } from '../lib/api/client';
@@ -10,21 +9,15 @@ import {
   enrollInCourse,
   getCourse,
   getCourses,
+  logoutUser,
   startLesson,
   submitLessonPage,
 } from '../lib/api/penny-wise';
 
-beforeEach(() => {
-  window.localStorage.clear();
-});
-
 describe('API auth and errors', () => {
-  it('reads the current token for each request configuration', () => {
-    saveAuth({ token: 'token-123', user: { id: 'learner-1' } });
-
-    const config = attachAuthToken({ headers: {} });
-
-    expect(config.headers.Authorization).toBe('Bearer token-123');
+  it('uses cookie credentials instead of an Authorization header', () => {
+    expect(api.defaults.withCredentials).toBe(true);
+    expect(api.defaults.headers.Authorization).toBeUndefined();
   });
 
   it('normalizes an API error without losing its status or server message', () => {
@@ -40,30 +33,31 @@ describe('API auth and errors', () => {
     expect(error.message).toBe('Choose a valid answer.');
   });
 
-  it('clears stored authentication when a request returns 401', () => {
-    saveAuth({ token: 'expired-token', user: { id: 'learner-1' } });
+  it('notifies the session when a protected request returns 401', () => {
     const event = vi.fn();
-    window.addEventListener('penny-wise.auth-changed', event);
+    window.addEventListener(AUTH_EXPIRED_EVENT, event);
 
     const error = handleApiError({
+      config: { url: '/courses/course-1' },
       response: { status: 401, data: { error: 'Session expired' } },
     });
 
     expect(error.status).toBe(401);
-    expect(window.localStorage.getItem(AUTH_STORAGE_KEY)).toBeNull();
     expect(event).toHaveBeenCalledOnce();
-    window.removeEventListener('penny-wise.auth-changed', event);
+    window.removeEventListener(AUTH_EXPIRED_EVENT, event);
   });
 
-  it('keeps an existing session when login credentials are invalid', () => {
-    saveAuth({ token: 'valid-token', user: { id: 'learner-1' } });
+  it('does not expire the session for invalid login credentials', () => {
+    const event = vi.fn();
+    window.addEventListener(AUTH_EXPIRED_EVENT, event);
 
     handleApiError({
       config: { url: '/auth/login' },
       response: { status: 401, data: { error: 'Invalid credentials' } },
     });
 
-    expect(window.localStorage.getItem(AUTH_STORAGE_KEY)).not.toBeNull();
+    expect(event).not.toHaveBeenCalled();
+    window.removeEventListener(AUTH_EXPIRED_EVENT, event);
   });
 
   it('passes abort signals and locked endpoint bodies through services', async () => {
@@ -86,6 +80,7 @@ describe('API auth and errors', () => {
       { optionIndex: 1 },
       controller.signal,
     );
+    await logoutUser(controller.signal);
 
     expect(get).toHaveBeenNthCalledWith(1, '/courses', {
       signal: controller.signal,
@@ -113,5 +108,8 @@ describe('API auth and errors', () => {
       { answer: { optionIndex: 1 } },
       { signal: controller.signal },
     );
+    expect(post).toHaveBeenNthCalledWith(4, '/auth/logout', undefined, {
+      signal: controller.signal,
+    });
   });
 });

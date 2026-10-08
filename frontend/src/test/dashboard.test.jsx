@@ -3,7 +3,6 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Dashboard from '../pages/Dashboard';
 import { AuthProvider } from '../context/AuthContext';
-import { AUTH_STORAGE_KEY } from '../lib/authStorage';
 import { getCourses, getCurrentUser } from '../lib/api/penny-wise';
 
 vi.mock('../lib/api/penny-wise', () => ({
@@ -13,7 +12,6 @@ vi.mock('../lib/api/penny-wise', () => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
-  window.localStorage.clear();
   getCourses.mockResolvedValue({
     courses: [
       {
@@ -27,13 +25,6 @@ beforeEach(() => {
 });
 
 function renderDashboard() {
-  window.localStorage.setItem(
-    AUTH_STORAGE_KEY,
-    JSON.stringify({
-      token: 'token',
-      user: { id: 'learner', role: 'learner' },
-    }),
-  );
   return render(
     <MemoryRouter>
       <AuthProvider>

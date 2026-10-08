@@ -38,10 +38,10 @@ export default function LoginPage() {
     setStatus({ state: 'loading', message: 'Signing you in…' });
 
     try {
-      const data = await loginUser({ email, password });
-      signIn({ token: data.token, user: data.user });
+      await loginUser({ email, password });
+      const user = await signIn();
       setStatus({ state: 'success', message: 'Logged in successfully!' });
-      navigate(getDestination(location, data.user.role), { replace: true });
+      navigate(getDestination(location, user?.role), { replace: true });
     } catch (error) {
       setStatus({
         state: 'error',

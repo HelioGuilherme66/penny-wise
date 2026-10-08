@@ -4,12 +4,17 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import CoursePage from '../pages/CoursePage';
 import { AuthProvider } from '../context/AuthContext';
-import { AUTH_STORAGE_KEY } from '../lib/authStorage';
-import { enrollInCourse, getCourse } from '../lib/api/penny-wise';
+import {
+  enrollInCourse,
+  getCourse,
+  getCurrentUser,
+} from '../lib/api/penny-wise';
 
 vi.mock('../lib/api/penny-wise', () => ({
   getCourse: vi.fn(),
   enrollInCourse: vi.fn(),
+  getCurrentUser: vi.fn(),
+  logoutUser: vi.fn().mockResolvedValue({ success: true }),
 }));
 
 const course = {
@@ -36,9 +41,11 @@ const course = {
   totalEstimatedDurationInMinutes: 18,
 };
 
-function renderCourse(learningState, auth = null) {
-  if (auth) {
-    window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(auth));
+function renderCourse(learningState, user = null) {
+  if (user) {
+    getCurrentUser.mockResolvedValue({ user });
+  } else {
+    getCurrentUser.mockRejectedValue({ status: 401 });
   }
   getCourse.mockResolvedValue({ course, learningState });
   return render(
@@ -54,7 +61,6 @@ function renderCourse(learningState, auth = null) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  window.localStorage.clear();
 });
 
 describe('course detail enrollment states', () => {
@@ -68,7 +74,7 @@ describe('course detail enrollment states', () => {
   });
 
   it('enrolls a learner and exposes the start action', async () => {
-    const auth = { token: 'token', user: { id: 'learner', role: 'learner' } };
+    const auth = { id: 'learner', role: 'learner' };
     enrollInCourse.mockResolvedValue({
       course,
       learningState: {
@@ -118,7 +124,7 @@ describe('course detail enrollment states', () => {
         firstLessonId: 'lesson-1',
         resumeLessonId: 'lesson-1',
       },
-      { token: 'token', user: { id: 'learner', role: 'learner' } },
+      { id: 'learner', role: 'learner' },
     );
 
     expect(
@@ -138,7 +144,7 @@ describe('course detail enrollment states', () => {
         firstLessonId: 'lesson-1',
         resumeLessonId: 'lesson-2',
       },
-      { token: 'token', user: { id: 'learner', role: 'learner' } },
+      { id: 'learner', role: 'learner' },
     );
 
     expect(
@@ -161,7 +167,7 @@ describe('course detail enrollment states', () => {
         firstLessonId: 'lesson-1',
         resumeLessonId: 'lesson-1',
       },
-      { token: 'token', user: { id: 'learner', role: 'learner' } },
+      { id: 'learner', role: 'learner' },
     );
 
     expect(await screen.findByText('Course complete')).toBeInTheDocument();
@@ -172,8 +178,8 @@ describe('course detail enrollment states', () => {
 
   it('does not offer enrollment to authors', async () => {
     renderCourse(null, {
-      token: 'token',
-      user: { id: 'author', role: 'author' },
+      id: 'author',
+      role: 'author',
     });
 
     expect(

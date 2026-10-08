@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { clearAuth, getAuthToken } from '../authStorage';
+
+export const AUTH_EXPIRED_EVENT = 'penny-wise.auth-expired';
 
 const baseURL =
   import.meta.env.VITE_API_BASE_URL?.trim() || 'http://localhost:5000/api';
@@ -28,22 +29,6 @@ export function normalizeApiError(error) {
   return normalized;
 }
 
-export function attachAuthToken(config) {
-  const token = getAuthToken();
-  if (!token) return config;
-
-  if (config.headers && typeof config.headers.set === 'function') {
-    config.headers.set('Authorization', `Bearer ${token}`);
-  } else {
-    config.headers = {
-      ...(config.headers || {}),
-      Authorization: `Bearer ${token}`,
-    };
-  }
-
-  return config;
-}
-
 export function handleApiError(error) {
   const normalized = normalizeApiError(error);
   const requestUrl = error?.config?.url || '';
@@ -51,19 +36,25 @@ export function handleApiError(error) {
     requestUrl.includes(path),
   );
 
-  if (normalized.status === 401 && !isAuthEntry) clearAuth();
+  if (
+    normalized.status === 401 &&
+    !isAuthEntry &&
+    typeof window !== 'undefined'
+  ) {
+    window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
+  }
+
   return normalized;
 }
 
 export const api = axios.create({
   baseURL,
   timeout: 10000,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 });
-
-api.interceptors.request.use(attachAuthToken);
 
 api.interceptors.response.use(
   (response) => response,

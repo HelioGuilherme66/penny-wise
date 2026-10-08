@@ -46,6 +46,9 @@ export const registerUser = (userData, signal) =>
 export const loginUser = (credentials, signal) =>
   postData('/auth/login', credentials, getSignal(signal));
 
+export const logoutUser = (signal) =>
+  postData('/auth/logout', undefined, getSignal(signal));
+
 export const getCurrentUser = (signal) =>
   getData('/auth/me', getSignal(signal));
 

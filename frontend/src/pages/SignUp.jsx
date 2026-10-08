@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
 import { registerUser } from '../lib/api/penny-wise';
+import { useAuth } from '../lib/useAuth';
 import AuthSplit, {
   FormStatus,
   SubmitButton,
@@ -11,8 +12,8 @@ import BankDealIllustration from '../assets/illustrations/svg/7 - BANK DEAL.svg'
 import EconomyIllustration from '../assets/illustrations/svg/9 - ECONOMY ANALYSIS.svg';
 
 const SignUp = () => {
+  const { signIn } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -35,11 +36,14 @@ const SignUp = () => {
       }
       setStatus({ state: 'loading', message: 'Creating your account…' });
       await registerUser({ displayName, email, password });
+      const user = await signIn();
       setStatus({
         state: 'success',
-        message: 'Account created successfully! Redirecting to login…',
+        message: 'Account created successfully!',
       });
-      navigate('/login', { replace: true, state: location.state });
+      navigate(user?.role === 'learner' ? '/dashboard' : '/', {
+        replace: true,
+      });
     } catch (error) {
       setStatus({
         state: 'error',

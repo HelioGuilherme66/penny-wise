@@ -6,13 +6,12 @@ function attachUser(req, token) {
 }
 
 function requireAuth(req, res, next) {
-  const header = req.headers.authorization || '';
-  const [scheme, token] = header.split(' ');
+  const token = req.cookies.authCookie;
 
-  if (scheme !== 'Bearer' || !token) {
+  if (!token) {
     return res
       .status(401)
-      .json({ error: 'Missing or malformed Authorization header' });
+      .json({ error: 'User is not authenticated with authCookie' });
   }
 
   try {
@@ -25,10 +24,9 @@ function requireAuth(req, res, next) {
 }
 
 function optionalAuth(req, res, next) {
-  const header = req.headers.authorization || '';
-  const [scheme, token] = header.split(' ');
+  const token = req.cookies.authCookie;
 
-  if (scheme === 'Bearer' && token) {
+  if (token) {
     try {
       const payload = jwt.verify(token, process.env.JWT_SECRET);
       req.user = { id: payload.sub, email: payload.email, role: payload.role };

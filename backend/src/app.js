@@ -1,13 +1,22 @@
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
+const cookieParser = require('cookie-parser');
 const coursesRouter = require('./routes/courses');
 const authRoutes = require('./routes/auth');
 
+const clientOrigin = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
+
 function createApp() {
   const app = express();
-  app.use(cors());
   app.use(express.json());
+  app.use(
+    cors({
+      origin: clientOrigin,
+      credentials: true,
+    }),
+  );
+  app.use(cookieParser());
   app.use(morgan('dev'));
 
   app.get('/', (req, res) => {

@@ -5,7 +5,7 @@ import { AppRoutes } from '../App';
 import RequireAuth from '../components/RequireAuth';
 import { ThemeProvider } from '../context/ThemeContext';
 import { AuthProvider } from '../context/AuthContext';
-import { AUTH_STORAGE_KEY } from '../lib/authStorage';
+import { getCurrentUser } from '../lib/api/penny-wise';
 
 vi.mock('../lib/api/penny-wise', () => ({
   getCourses: vi.fn().mockResolvedValue({ courses: [] }),
@@ -15,6 +15,8 @@ vi.mock('../lib/api/penny-wise', () => ({
     pages: [],
     progress: null,
   }),
+  getCurrentUser: vi.fn(),
+  logoutUser: vi.fn().mockResolvedValue({ success: true }),
 }));
 
 function renderApp(path) {
@@ -29,10 +31,13 @@ function renderApp(path) {
   );
 }
 
-function renderGuard(path, auth, allowedRole) {
-  if (auth) {
-    window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(auth));
+function renderGuard(path, user, allowedRole) {
+  if (user) {
+    getCurrentUser.mockResolvedValue({ user });
+  } else {
+    getCurrentUser.mockRejectedValue({ status: 401 });
   }
+
   return render(
     <MemoryRouter initialEntries={[path]}>
       <AuthProvider>
@@ -53,30 +58,29 @@ function renderGuard(path, auth, allowedRole) {
 }
 
 beforeEach(() => {
-  window.localStorage.clear();
+  vi.clearAllMocks();
+  getCurrentUser.mockRejectedValue({ status: 401 });
 });
 
 describe('route guards and legacy redirects', () => {
-  it('redirects anonymous users to login', () => {
+  it('redirects anonymous users to login', async () => {
     renderGuard('/private');
 
-    expect(screen.getByText('Login destination')).toBeInTheDocument();
+    expect(await screen.findByText('Login destination')).toBeInTheDocument();
   });
 
-  it('renders protected content for an authenticated user', () => {
-    renderGuard('/private', { token: 'token', user: { id: 'learner' } });
+  it('renders protected content for an authenticated user', async () => {
+    renderGuard('/private', { id: 'learner', role: 'learner' });
 
-    expect(screen.getByText('Private destination')).toBeInTheDocument();
+    expect(await screen.findByText('Private destination')).toBeInTheDocument();
   });
 
-  it('denies authenticated users with the wrong role', () => {
-    renderGuard(
-      '/private',
-      { token: 'token', user: { id: 'author', role: 'author' } },
-      'learner',
-    );
+  it('denies authenticated users with the wrong role', async () => {
+    renderGuard('/private', { id: 'author', role: 'author' }, 'learner');
 
-    expect(screen.getByText('This area is for learners')).toBeInTheDocument();
+    expect(
+      await screen.findByText('This area is for learners'),
+    ).toBeInTheDocument();
     expect(screen.queryByText('Private destination')).not.toBeInTheDocument();
   });
 

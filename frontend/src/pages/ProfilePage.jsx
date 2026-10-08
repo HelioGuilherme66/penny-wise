@@ -75,12 +75,10 @@ const ProfilePage = () => {
     );
   }
 
-  return (
-    <ProfileForm key={user.id ?? user.email} user={user} token={auth.token} />
-  );
+  return <ProfileForm key={user.id ?? user.email} user={user} />;
 };
 
-const ProfileForm = ({ user, token }) => {
+const ProfileForm = ({ user }) => {
   const { signIn } = useAuth();
   const [displayName, setDisplayName] = useState(user.displayName ?? '');
   const [country, setCountry] = useState(user.country ?? '');
@@ -147,7 +145,6 @@ const ProfileForm = ({ user, token }) => {
       return;
     }
     signIn({
-      token,
       user: {
         ...user,
         displayName: trimmedName,

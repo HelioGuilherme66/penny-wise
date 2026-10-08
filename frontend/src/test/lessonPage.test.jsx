@@ -5,16 +5,18 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import LessonPage from '../pages/LessonPage';
 import {
   getCourse,
+  getCurrentUser,
   startLesson,
   submitLessonPage,
 } from '../lib/api/penny-wise';
 import { AuthProvider } from '../context/AuthContext';
-import { AUTH_STORAGE_KEY } from '../lib/authStorage';
 
 vi.mock('../lib/api/penny-wise', () => ({
   getCourse: vi.fn(),
   startLesson: vi.fn(),
   submitLessonPage: vi.fn(),
+  getCurrentUser: vi.fn(),
+  logoutUser: vi.fn().mockResolvedValue({ success: true }),
 }));
 
 const course = {
@@ -65,13 +67,6 @@ function initialProgress(overrides = {}) {
 }
 
 function renderLesson() {
-  window.localStorage.setItem(
-    AUTH_STORAGE_KEY,
-    JSON.stringify({
-      token: 'token',
-      user: { id: 'learner-1', role: 'learner' },
-    }),
-  );
   return render(
     <MemoryRouter initialEntries={['/courses/course-1/lessons/lesson-1']}>
       <AuthProvider>
@@ -89,6 +84,9 @@ function renderLesson() {
 beforeEach(() => {
   vi.clearAllMocks();
   getCourse.mockResolvedValue({ course, learningState: null });
+  getCurrentUser.mockResolvedValue({
+    user: { id: 'learner-1', role: 'learner' },
+  });
 });
 
 describe('lesson player', () => {

@@ -167,13 +167,13 @@ describe('course enrollment', () => {
     );
     const author = await request(app)
       .post(`/api/courses/${course._id}/enroll`)
-      .set('Authorization', `Bearer ${authorToken}`);
+      .set('Cookie', `authCookie=${authorToken}`);
     const first = await request(app)
       .post(`/api/courses/${course._id}/enroll`)
-      .set('Authorization', `Bearer ${learnerToken}`);
+      .set('Cookie', `authCookie=${learnerToken}`);
     const second = await request(app)
       .post(`/api/courses/${course._id}/enroll`)
-      .set('Authorization', `Bearer ${learnerToken}`);
+      .set('Cookie', `authCookie=${learnerToken}`);
 
     expect(anonymous.status).toBe(401);
     expect(author.status).toBe(403);
@@ -195,10 +195,10 @@ describe('lesson player', () => {
 
     const first = await request(app)
       .post(`/api/courses/${course._id}/lessons/${lesson._id}/start`)
-      .set('Authorization', `Bearer ${learnerToken}`);
+      .set('Cookie', `authCookie=${learnerToken}`);
     const second = await request(app)
       .post(`/api/courses/${course._id}/lessons/${lesson._id}/start`)
-      .set('Authorization', `Bearer ${learnerToken}`);
+      .set('Cookie', `authCookie=${learnerToken}`);
 
     expect(first.status).toBe(201);
     expect(first.body.progress.currentPage).toBe(0);
@@ -209,7 +209,7 @@ describe('lesson player', () => {
 
     const courseResponse = await request(app)
       .get(`/api/courses/${second.body.lesson.courseId}`)
-      .set('Authorization', `Bearer ${learnerToken}`);
+      .set('Cookie', `authCookie=${learnerToken}`);
     expect(courseResponse.body.learningState.hasStarted).toBe(true);
   });
 
@@ -223,13 +223,13 @@ describe('lesson player', () => {
     } = await createCourseFixture();
     const start = await request(app)
       .post(`/api/courses/${course._id}/lessons/${lesson._id}/start`)
-      .set('Authorization', `Bearer ${learnerToken}`);
+      .set('Cookie', `authCookie=${learnerToken}`);
     const submit = (pageId, answer) =>
       request(app)
         .post(
           `/api/courses/${course._id}/lessons/${lesson._id}/pages/${pageId}/submit`,
         )
-        .set('Authorization', `Bearer ${learnerToken}`)
+        .set('Cookie', `authCookie=${learnerToken}`)
         .send({ answer });
 
     const wrongChoice = await submit(multipleChoice._id, { optionIndex: 1 });
@@ -327,13 +327,13 @@ describe('lesson player', () => {
     });
     await request(app)
       .post(`/api/courses/${course._id}/lessons/${lesson._id}/start`)
-      .set('Authorization', `Bearer ${learnerToken}`);
+      .set('Cookie', `authCookie=${learnerToken}`);
 
     const outOfOrder = await request(app)
       .post(
         `/api/courses/${course._id}/lessons/${lesson._id}/pages/${wantsNeeds._id}/submit`,
       )
-      .set('Authorization', `Bearer ${learnerToken}`)
+      .set('Cookie', `authCookie=${learnerToken}`)
       .send({
         answer: {
           classifications: [
@@ -344,7 +344,7 @@ describe('lesson player', () => {
       });
     const crossLesson = await request(app)
       .post(`/api/courses/${course._id}/lessons/${otherLesson._id}/start`)
-      .set('Authorization', `Bearer ${learnerToken}`);
+      .set('Cookie', `authCookie=${learnerToken}`);
 
     expect(outOfOrder.status).toBe(409);
     expect(crossLesson.status).toBe(404);
@@ -378,11 +378,11 @@ describe('current learner', () => {
 
     await request(app)
       .post(`/api/courses/${course._id}/lessons/${lesson._id}/start`)
-      .set('Authorization', `Bearer ${learnerToken}`);
+      .set('Cookie', `authCookie=${learnerToken}`);
 
     const active = await request(app)
       .get('/api/auth/me')
-      .set('Authorization', `Bearer ${learnerToken}`);
+      .set('Cookie', `authCookie=${learnerToken}`);
 
     expect(active.status).toBe(200);
     expect(active.body.learning.resume).toMatchObject({
@@ -419,7 +419,7 @@ describe('current learner', () => {
         .post(
           `/api/courses/${course._id}/lessons/${lesson._id}/pages/${page._id}/submit`,
         )
-        .set('Authorization', `Bearer ${learnerToken}`)
+        .set('Cookie', `authCookie=${learnerToken}`)
         .send({ answer });
       expect(response.status).toBe(200);
       expect(response.body.progress.completedPages).toBe(index + 1);
@@ -427,7 +427,7 @@ describe('current learner', () => {
 
     const courseState = await request(app)
       .get(`/api/courses/${course._id}`)
-      .set('Authorization', `Bearer ${learnerToken}`);
+      .set('Cookie', `authCookie=${learnerToken}`);
     expect(courseState.body.learningState).toMatchObject({
       hasStarted: true,
       resumeLessonId: nextLesson._id.toString(),
@@ -435,7 +435,7 @@ describe('current learner', () => {
 
     const resumed = await request(app)
       .post(`/api/courses/${course._id}/lessons/${lesson._id}/start`)
-      .set('Authorization', `Bearer ${learnerToken}`);
+      .set('Cookie', `authCookie=${learnerToken}`);
     expect(resumed.body.completion).toMatchObject({
       completed: true,
       courseCompleted: false,
@@ -447,7 +447,7 @@ describe('current learner', () => {
 
     const completed = await request(app)
       .get('/api/auth/me')
-      .set('Authorization', `Bearer ${learnerToken}`);
+      .set('Cookie', `authCookie=${learnerToken}`);
     expect(completed.body.learning.resume).toMatchObject({
       courseId: course._id.toString(),
       lessonId: nextLesson._id.toString(),

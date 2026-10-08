@@ -20,7 +20,8 @@ afterAll(async () => {
 
 describe('POST /api/courses', () => {
   it('creates a course for an authenticated author', async () => {
-    const registerRes = await request(app).post('/api/auth/register').send({
+    const agent = request.agent(app);
+    const registerRes = await agent.post('/api/auth/register').send({
       email: 'author@example.com',
       password: 'password123',
       displayName: 'Author User',
@@ -29,10 +30,8 @@ describe('POST /api/courses', () => {
 
     expect(registerRes.status).toBe(201);
 
-    const token = registerRes.body.token;
-    const res = await request(app)
+    const res = await agent
       .post('/api/courses')
-      .set('Authorization', `Bearer ${token}`)
       .send({ name: 'Personal Finance Basics' });
 
     expect(res.status).toBe(201);
@@ -43,35 +42,34 @@ describe('POST /api/courses', () => {
   });
 
   it('rejects a course with no name', async () => {
-    const registerRes = await request(app).post('/api/auth/register').send({
+    const agent = request.agent(app);
+    const registerRes = await agent.post('/api/auth/register').send({
       email: 'author2@example.com',
       password: 'password123',
       displayName: 'Author User 2',
       authorInviteCode: process.env.AUTHOR_SECRET_CODE,
     });
 
-    const res = await request(app)
-      .post('/api/courses')
-      .set('Authorization', `Bearer ${registerRes.body.token}`)
-      .send({ name: '   ' });
+    const res = await agent.post('/api/courses').send({ name: '   ' });
 
+    expect(registerRes.status).toBe(201);
     expect(res.status).toBe(400);
     expect(res.body.error).toBe('Course name is required');
   });
+
   it('rejects a learner from creating a course', async () => {
-    const registerRes = await request(app).post('/api/auth/register').send({
+    const agent = request.agent(app);
+    const registerRes = await agent.post('/api/auth/register').send({
       email: 'learner@example.com',
       password: 'password123',
       displayName: 'Learner User',
     });
 
-    expect(registerRes.status).toBe(201);
-
-    const res = await request(app)
+    const res = await agent
       .post('/api/courses')
-      .set('Authorization', `Bearer ${registerRes.body.token}`)
       .send({ name: 'Unauthorized Course' });
 
+    expect(registerRes.status).toBe(201);
     expect(res.status).toBe(403);
   });
 });

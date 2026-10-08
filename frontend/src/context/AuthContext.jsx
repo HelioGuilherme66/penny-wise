@@ -1,44 +1,65 @@
 import { useCallback, useEffect, useState } from 'react';
-import {
-  AUTH_CHANGE_EVENT,
-  AUTH_STORAGE_KEY,
-  clearAuth,
-  readAuth,
-  saveAuth,
-} from '../lib/authStorage';
+import { AUTH_EXPIRED_EVENT } from '../lib/api/client';
+import { getCurrentUser, logoutUser } from '../lib/api/penny-wise';
 import { AuthContext } from './auth-context';
 
 export function AuthProvider({ children }) {
-  const [auth, setAuth] = useState(() => readAuth());
-
-  const signIn = useCallback(({ token, user }) => {
-    const value = { token, user };
-    saveAuth(value);
-    setAuth(value);
-  }, []);
-
-  const signOut = useCallback(() => {
-    clearAuth();
-    setAuth(null);
-  }, []);
+  const [auth, setAuth] = useState(null);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const onStorage = (event) => {
-      if (event.key !== null && event.key !== AUTH_STORAGE_KEY) return;
-      setAuth(readAuth());
+    let isMounted = true;
+
+    getCurrentUser()
+      .then((data) => {
+        if (!isMounted) return;
+        setAuth(data?.user ? { user: data.user } : null);
+      })
+      .catch(() => {
+        if (isMounted) setAuth(null);
+      })
+      .finally(() => {
+        if (isMounted) setReady(true);
+      });
+
+    return () => {
+      isMounted = false;
     };
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
   }, []);
 
   useEffect(() => {
-    const resync = () => setAuth(readAuth());
-    window.addEventListener(AUTH_CHANGE_EVENT, resync);
-    return () => window.removeEventListener(AUTH_CHANGE_EVENT, resync);
+    const onExpired = () => setAuth(null);
+    window.addEventListener(AUTH_EXPIRED_EVENT, onExpired);
+    return () => window.removeEventListener(AUTH_EXPIRED_EVENT, onExpired);
+  }, []);
+
+  const signIn = useCallback(async (value) => {
+    let user = value?.user ?? value;
+
+    if (!user) {
+      try {
+        user = (await getCurrentUser())?.user;
+      } catch {
+        user = null;
+      }
+    }
+
+    setAuth(user ? { user } : null);
+    return user ?? null;
+  }, []);
+
+  const signOut = useCallback(async () => {
+    try {
+      await logoutUser();
+    } catch {
+      return;
+    } finally {
+      setAuth(null);
+    }
   }, []);
 
   return (
-    <AuthContext.Provider value={{ auth, signIn, signOut, ready: true }}>
+    <AuthContext.Provider value={{ auth, signIn, signOut, ready }}>
       {children}
     </AuthContext.Provider>
   );

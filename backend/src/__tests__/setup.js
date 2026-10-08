@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 
+process.env.AUTHOR_SECRET_CODE ||= '1234567890ABCDEF';
+
 let mongoServer;
 
 async function setupTestDB() {

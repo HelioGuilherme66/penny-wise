@@ -1,21 +1,23 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import NavBar from '../components/NavBar';
 import { AuthProvider } from '../context/AuthContext';
 import { ThemeProvider } from '../context/ThemeContext';
-import { AUTH_STORAGE_KEY } from '../lib/authStorage';
+import { getCurrentUser, logoutUser } from '../lib/api/penny-wise';
+
+vi.mock('../lib/api/penny-wise', () => ({
+  getCurrentUser: vi.fn(),
+  logoutUser: vi.fn(),
+}));
 
 describe('auth navigation', () => {
-  it('removes the bearer token from storage on logout', async () => {
-    window.localStorage.setItem(
-      AUTH_STORAGE_KEY,
-      JSON.stringify({
-        token: 'token-to-remove',
-        user: { id: 'learner', role: 'learner' },
-      }),
-    );
+  it('ends the cookie session on logout', async () => {
+    getCurrentUser.mockResolvedValue({
+      user: { id: 'learner', role: 'learner' },
+    });
+    logoutUser.mockResolvedValue({ success: true });
 
     render(
       <MemoryRouter>
@@ -27,15 +29,21 @@ describe('auth navigation', () => {
       </MemoryRouter>,
     );
 
-    const logoutButtons = screen.getAllByRole('button', { name: /log out/i });
+    const logoutButton = (
+      await screen.findAllByRole('button', { name: /log out/i })
+    )[0];
     expect(
       screen.getAllByRole('link', { name: /dashboard/i }).length,
     ).toBeGreaterThan(0);
-    await userEvent.click(logoutButtons[0]);
 
-    expect(window.localStorage.getItem(AUTH_STORAGE_KEY)).toBeNull();
+    await userEvent.click(logoutButton);
+
+    expect(logoutUser).toHaveBeenCalledTimes(1);
     expect(
       screen.queryByRole('link', { name: /dashboard/i }),
     ).not.toBeInTheDocument();
+    expect(
+      screen.getAllByRole('link', { name: /log in/i }).length,
+    ).toBeGreaterThan(0);
   });
 });

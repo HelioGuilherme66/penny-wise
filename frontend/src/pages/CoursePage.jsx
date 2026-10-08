@@ -61,7 +61,7 @@ export default function CoursePage() {
       window.clearTimeout(timeout);
       controller.abort();
     };
-  }, [auth?.token, loadCourse]);
+  }, [auth?.user?.id, loadCourse]);
 
   const handleEnroll = async () => {
     if (enrolling) return;
