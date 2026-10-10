@@ -7,6 +7,12 @@ const countrySchema = new mongoose.Schema({
     unique: true,
     trim: true,
   },
+  code: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+  },
 });
 
 module.exports = mongoose.model('Country', countrySchema);
