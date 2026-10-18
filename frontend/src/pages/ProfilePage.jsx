@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CircleUser, Globe, Mail, User } from 'lucide-react';
-import { getCountries, submitProfile } from '../lib/api/penny-wise';
+import { getCountries, getImages, submitProfile } from '../lib/api/penny-wise';
+import PopUp from '../components/PopUp';
+import UploadImage from '../components/UploadImage';
 import { useAuth } from '../lib/useAuth';
 
 const levelTitlePicker = (level) => {
@@ -85,8 +87,11 @@ const ProfileForm = ({ user }) => {
   const [country, setCountry] = useState(user.country ?? '');
   const [bio, setBio] = useState(user.bio ?? '');
   const [countries, setCountries] = useState([]);
+  const [images, setImages] = useState([]);
+  const [allowDelete, setDelete] = useState(false);
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState(null);
+  const [showPopUp, setShowPopUp] = useState(false);
 
   const loadCountries = useCallback(async (signal) => {
     setStatus('loading');
@@ -121,6 +126,39 @@ const ProfileForm = ({ user }) => {
       controller.abort();
     };
   }, [loadCountries]);
+
+  const loadImages = useCallback(async (signal) => {
+    setStatus('loading');
+    setError(null);
+
+    try {
+      const data = await getImages(user.id, signal);
+      console.log(`ProfilePage Received data: ${data}`);
+      console.log(`First element: ${data[0]}`);
+      setImages(Array.isArray(data?.length > 0 ? data.map((x) => x.path) : []));
+
+      console.log(`Images have size =${images.length}`);
+      setStatus('ready');
+    } catch (loadError) {
+      if (signal?.aborted || loadError?.code === 'ERR_CANCELED') return;
+      setError(loadError);
+      setStatus('error');
+      if (process.env.NODE_ENV === 'development') {
+        console.log(error);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => {
+      loadImages(controller.signal);
+    }, 0);
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [loadImages]);
 
   const stats = useMemo(() => {
     if (!user) return [];
@@ -323,25 +361,35 @@ const ProfileForm = ({ user }) => {
             )}
             <div className='flex gap-3'>
               <button
+                onClick={() => setShowPopUp(true)}
                 type='button'
-                disabled
-                title='Avatar upload is not yet available'
-                className='cursor-not-allowed bg-(--accent-bold) px-5 py-2 text-sm font-semibold text-white opacity-50'
+                title='Upload your profile image.'
+                className='bg-(--accent-bold) px-5 py-2 text-sm font-semibold text-white opacity-50'
               >
                 Upload
               </button>
               <button
+                onClick={() => {
+                  setDelete(true);
+                  setShowPopUp(true);
+                }}
                 type='button'
-                disabled
-                title='Avatar upload is not yet available.'
-                className='cursor-not-allowed border border-(--accent-border) px-5 py-2 text-sm font-semibold text-(--accent-bold) opacity-50'
+                title='Remove your profile image.'
+                className='{!user.avatar ?? cursor-not-allowed} border border-(--accent-border) px-5 py-2 text-sm font-semibold text-(--accent-bold) opacity-50'
               >
                 Remove
               </button>
+              <PopUp
+                showPopUp={showPopUp}
+                closePopUp={() => setShowPopUp(false)}
+              >
+                <UploadImage allowDelete={allowDelete} />
+                {/* <img className='enlarged' align='left' src={user.avatar} alt={user.avatar} /> */}
+              </PopUp>
             </div>
           </div>
           <p className='mt-2 text-xs text-(--text)'>
-            Avatar upload will be available soon.
+            Manage your profile image.
           </p>
 
           <form onSubmit={handleSubmit} className='mt-6 space-y-5'>
