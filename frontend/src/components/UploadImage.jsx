@@ -1,8 +1,9 @@
 import { useState } from 'react'; // useEffect,
 import axios from 'axios';
 
-function UploadImage({ allowDelete }) {
+function UploadImage({ selectedImage }) {
   const [image, setImage] = useState(null);
+  const [enlargedImage, setEnlargedImage] = useState(selectedImage);
   const [allImages, setAllImages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -22,7 +23,7 @@ function UploadImage({ allowDelete }) {
     }
   };
 
-  // fetchImages();
+  fetchImages();
   /*
   useEffect(() => {
     fetchImages();
@@ -35,6 +36,16 @@ function UploadImage({ allowDelete }) {
     if (file) {
       setImage(file);
       setError('');
+    }
+  };
+
+  // Selected image to return
+  const handleImageSelection = (e) => {
+    const img = e.src;
+    if (img) {
+      setEnlargedImage(img);
+      setError('');
+      console.log(`handleImageSelection image=${img}`);
     }
   };
 
@@ -74,36 +85,44 @@ function UploadImage({ allowDelete }) {
 
   return (
     <div className='popup-container'>
-      <div className='upload-card'>
-        <h1>Image Upload & Preview</h1>
-
-        {/* File Input */}
-        <input type='file' accept='image/*' onChange={handleImageSelect} />
-
-        {/* Preview */}
-        {image && (
-          <div className='preview-container'>
+      <div className='top-container'>
+        <div className='selectedImage width=30% flex=0.3'>
+          {selectedImage && (
             <img
-              src={URL.createObjectURL(image)}
-              alt='preview'
-              className='preview-img'
+              src={enlargedImage}
+              alt='Selected Image'
+              className='enlarged'
             />
-          </div>
-        )}
+          )}
+        </div>
+        <div className='upload-card width=70% flex=0.7'>
+          <h1>Image Upload & Preview</h1>
 
-        {/* Error Message */}
-        {error && <p className='error-msg'>{error}</p>}
+          {/* File Input */}
+          <input type='file' accept='image/*' onChange={handleImageSelect} />
 
-        {/* Upload Button */}
-        <button
-          className='upload-btn'
-          onClick={handleUpload}
-          disabled={uploading}
-        >
-          {uploading ? 'Uploading...' : 'Upload'}
-        </button>
-        <div className='allowDelete'>
-          <p>Delete: ${allowDelete}</p>
+          {/* Preview */}
+          {image && (
+            <div className='preview-container'>
+              <img
+                src={URL.createObjectURL(image)}
+                alt='preview'
+                className='preview-img'
+              />
+            </div>
+          )}
+
+          {/* Error Message */}
+          {error && <p className='error-msg'>{error}</p>}
+
+          {/* Upload Button */}
+          <button
+            className='upload-btn'
+            onClick={handleUpload}
+            disabled={uploading}
+          >
+            {uploading ? 'Uploading...' : 'Upload'}
+          </button>
         </div>
       </div>
       {/* Gallery */}
@@ -114,6 +133,7 @@ function UploadImage({ allowDelete }) {
           allImages.map((img) => (
             <div className='gallery-item' key={img._id}>
               <img
+                onClick={handleImageSelection}
                 src={`http://localhost:5001/uploads/${img.path}`}
                 alt={img.name}
                 className='gallery-img'
