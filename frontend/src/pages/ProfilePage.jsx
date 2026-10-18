@@ -84,11 +84,11 @@ const ProfilePage = () => {
 const ProfileForm = ({ user }) => {
   const { signIn } = useAuth();
   const [displayName, setDisplayName] = useState(user.displayName ?? '');
+  const [userAvatar, setUserAvatar] = useState(user.profilePic ?? '');
   const [country, setCountry] = useState(user.country ?? '');
   const [bio, setBio] = useState(user.bio ?? '');
   const [countries, setCountries] = useState([]);
   const [images, setImages] = useState([]);
-  const [allowDelete, setDelete] = useState(false);
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState(null);
   const [showPopUp, setShowPopUp] = useState(false);
@@ -135,7 +135,7 @@ const ProfileForm = ({ user }) => {
       const data = await getImages(user.id, signal);
       console.log(`ProfilePage Received data: ${data}`);
       console.log(`First element: ${data[0]}`);
-      setImages(Array.isArray(data?.length > 0 ? data.map((x) => x.path) : []));
+      setImages(data?.length > 0 ? data.map((x) => x.path) : []);
 
       console.log(`Images have size =${images.length}`);
       setStatus('ready');
@@ -202,7 +202,8 @@ const ProfileForm = ({ user }) => {
   const dirty =
     trimmedName !== (user.displayName ?? '') ||
     trimmedCountry !== (user.country ?? '') ||
-    (user.role === 'author' && trimmedBio !== (user.bio ?? ''));
+    (user.role === 'author' && trimmedBio !== (user.bio ?? '')) ||
+    userAvatar !== (user.profilePic ?? '');
   const nameError =
     trimmedName.length === 0
       ? 'Display name is required.'
@@ -234,6 +235,7 @@ const ProfileForm = ({ user }) => {
         {
           ...user,
           userId: user.id,
+          profilePic: userAvatar,
           displayName: trimmedName,
           country: trimmedCountry,
           ...(user.role === 'author' ? { bio: trimmedBio } : {}),
@@ -250,10 +252,16 @@ const ProfileForm = ({ user }) => {
   };
 
   const handleDiscard = () => {
+    setUserAvatar(user.profilePic ?? '');
     setDisplayName(user.displayName ?? '');
     setCountry(user.country ?? '');
     setBio(user.bio ?? '');
     setStatus(null);
+  };
+
+  const handleDeleteUserAvatar = () => {
+    setUserAvatar('');
+    console.log('Deleted user profilePic');
   };
 
   const level = user.level ?? 1;
@@ -289,9 +297,9 @@ const ProfileForm = ({ user }) => {
       <div className='mt-6 grid gap-6 lg:grid-cols-[280px_1fr]'>
         {/* Summary card (left, mirrors mockup tab column position) */}
         <aside className='h-fit rounded-2xl border border-(--border) bg-(--bg) p-6 text-center shadow-(--shadow)'>
-          {user.avatar ? (
+          {userAvatar ? (
             <img
-              src={user.avatar}
+              src={userAvatar}
               alt={`${user.displayName}'s avatar`}
               className='mx-auto h-24 w-24 rounded-full border border-(--border) object-cover'
             />
@@ -347,9 +355,9 @@ const ProfileForm = ({ user }) => {
           </h2>
 
           <div className='mt-6 flex flex-wrap items-center gap-4'>
-            {user.avatar ? (
+            {userAvatar ? (
               <img
-                src={user.avatar}
+                src={userAvatar}
                 alt='Current avatar'
                 className='h-16 w-16 rounded-full border border-(--border) object-cover'
               />
@@ -369,13 +377,10 @@ const ProfileForm = ({ user }) => {
                 Upload
               </button>
               <button
-                onClick={() => {
-                  setDelete(true);
-                  setShowPopUp(true);
-                }}
+                onClick={() => handleDeleteUserAvatar()}
                 type='button'
                 title='Remove your profile image.'
-                className='{!user.avatar ?? cursor-not-allowed} border border-(--accent-border) px-5 py-2 text-sm font-semibold text-(--accent-bold) opacity-50'
+                className='{!userAvatar ?? cursor-not-allowed} border border-(--accent-border) px-5 py-2 text-sm font-semibold text-(--accent-bold) opacity-50'
               >
                 Remove
               </button>
@@ -383,8 +388,8 @@ const ProfileForm = ({ user }) => {
                 showPopUp={showPopUp}
                 closePopUp={() => setShowPopUp(false)}
               >
-                <UploadImage allowDelete={allowDelete} />
-                {/* <img className='enlarged' align='left' src={user.avatar} alt={user.avatar} /> */}
+                <UploadImage selectedImage={userAvatar} />
+                {/* <img className='enlarged' align='left' src={userAvatar} alt={userAvatar} /> */}
               </PopUp>
             </div>
           </div>
@@ -507,6 +512,17 @@ const ProfileForm = ({ user }) => {
               )}
             </div>
 
+            <div>
+              <input
+                id='userAvatar'
+                name='userAvatar'
+                type='text'
+                value={userAvatar}
+                hidden
+                readOnly
+              />
+            </div>
+
             <div aria-live='polite' className='min-h-6'>
               {status && (
                 <p
@@ -534,9 +550,6 @@ const ProfileForm = ({ user }) => {
                 Discard
               </button>
             </div>
-            <p className='text-xs text-(--text)'>
-              Changes are saved on this device only. Server sync is coming soon.
-            </p>
           </form>
         </section>
       </div>
