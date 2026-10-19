@@ -23,12 +23,13 @@ function UploadImage({ selectedImage }) {
     }
   };
 
-  fetchImages();
+  // fetchImages();  /// Blocks the loading of page
+
   /*
   useEffect(() => {
     fetchImages();
   }, []);
-*/
+  */
 
   // Select image handler
   const handleImageSelect = (e) => {
@@ -41,11 +42,10 @@ function UploadImage({ selectedImage }) {
 
   // Selected image to return
   const handleImageSelection = (e) => {
-    const img = e.src;
-    if (img) {
-      setEnlargedImage(img);
+    const imag = e.target.src;
+    if (imag) {
+      setEnlargedImage(imag);
       setError('');
-      console.log(`handleImageSelection image=${img}`);
     }
   };
 
@@ -66,7 +66,7 @@ function UploadImage({ selectedImage }) {
       });
 
       <div className='success'>
-        <p>Result: {res.data.message}</p>
+        <p>`Result: ${res.data.message}`</p>
       </div>;
 
       // Refresh images after upload
@@ -85,8 +85,9 @@ function UploadImage({ selectedImage }) {
 
   return (
     <div className='popup-container'>
+      {/* Not working, neither here nor at begining <div>{fetchImages()}</div> */}
       <div className='top-container'>
-        <div className='selectedImage width=30% flex=0.3'>
+        <div className='selectedImage'>
           {selectedImage && (
             <img
               src={enlargedImage}
@@ -95,7 +96,7 @@ function UploadImage({ selectedImage }) {
             />
           )}
         </div>
-        <div className='upload-card width=70% flex=0.7'>
+        <div className='upload-card'>
           <h1>Image Upload & Preview</h1>
 
           {/* File Input */}
