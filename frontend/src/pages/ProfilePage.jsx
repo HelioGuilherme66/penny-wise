@@ -388,8 +388,11 @@ const ProfileForm = ({ user }) => {
                 showPopUp={showPopUp}
                 closePopUp={() => setShowPopUp(false)}
               >
-                <UploadImage selectedImage={userAvatar} />
-                {/* <img className='enlarged' align='left' src={userAvatar} alt={userAvatar} /> */}
+                <UploadImage
+                  callBack={setUserAvatar}
+                  selectedImage={userAvatar}
+                  imageFiles={images}
+                />
               </PopUp>
             </div>
           </div>
