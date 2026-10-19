@@ -77,7 +77,7 @@ export const getImages = (userId, signal) => {
       `Started getImages userID= ${userId}, ${signal} at lib/api/penny-wise`,
     );
     const res = axios.get('http://localhost:5001/images');
-    console.log(`Returning from getImages data= ${res}`);
+    console.log(`Returning from getImages data= ${res.body}`);
     return res;
   } catch (err) {
     console.error('❌ Fetch error:', err.message);

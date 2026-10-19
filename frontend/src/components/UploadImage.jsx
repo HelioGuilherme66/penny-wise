@@ -1,10 +1,10 @@
 import { useState } from 'react'; // useEffect,
 import axios from 'axios';
 
-function UploadImage({ selectedImage }) {
+function UploadImage({ callBack, selectedImage, imageFiles }) {
   const [image, setImage] = useState(null);
   const [enlargedImage, setEnlargedImage] = useState(selectedImage);
-  const [allImages, setAllImages] = useState([]);
+  const [allImages, setAllImages] = useState(imageFiles);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
@@ -45,6 +45,7 @@ function UploadImage({ selectedImage }) {
     const imag = e.target.src;
     if (imag) {
       setEnlargedImage(imag);
+      callBack(imag);
       setError('');
     }
   };
