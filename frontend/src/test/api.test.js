@@ -60,6 +60,46 @@ describe('API auth and errors', () => {
     window.removeEventListener(AUTH_EXPIRED_EVENT, event);
   });
 
+  it('replaces an html error body with a readable message', () => {
+    const error = normalizeApiError({
+      response: {
+        status: 502,
+        data: '<html><body>Bad Gateway</body></html>',
+      },
+    });
+
+    expect(error.status).toBe(502);
+    expect(error.message).toBe(
+      'The server is temporarily unavailable. Please try again in a moment.',
+    );
+    expect(error.error).toBe(
+      'The server is temporarily unavailable. Please try again in a moment.',
+    );
+  });
+
+  it('explains a request timeout instead of leaking the axios message', () => {
+    const error = normalizeApiError({
+      code: 'ECONNABORTED',
+      message: 'timeout of 30000ms exceeded',
+    });
+
+    expect(error.status).toBeNull();
+    expect(error.message).toBe(
+      'The server is taking too long to respond. Please try again.',
+    );
+  });
+
+  it('explains an unreachable server instead of leaking the axios message', () => {
+    const error = normalizeApiError({
+      message: 'Network Error',
+    });
+
+    expect(error.status).toBeNull();
+    expect(error.message).toBe(
+      'We could not reach the server. Check your connection and try again.',
+    );
+  });
+
   it('passes abort signals and locked endpoint bodies through services', async () => {
     const get = vi
       .spyOn(api, 'get')

@@ -35,8 +35,8 @@ const SignUp = () => {
         return;
       }
       setStatus({ state: 'loading', message: 'Creating your account…' });
-      await registerUser({ displayName, email, password });
-      const user = await signIn();
+      const { user } = await registerUser({ displayName, email, password });
+      await signIn({ user });
       setStatus({
         state: 'success',
         message: 'Account created successfully!',

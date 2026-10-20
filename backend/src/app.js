@@ -20,6 +20,7 @@ function createApp() {
   );
   app.use(cookieParser());
   app.use(morgan('dev'));
+  if (process.env.NODE_ENV === 'production') app.set('trust proxy', 1);
 
   app.get('/', (req, res) => {
     res.send('Hello World');

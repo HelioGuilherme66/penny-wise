@@ -34,18 +34,24 @@ export function AuthProvider({ children }) {
   }, []);
 
   const signIn = useCallback(async (value) => {
-    let user = value?.user ?? value;
+    const candidate = value?.user ?? value;
+    let user =
+      candidate &&
+      typeof candidate === 'object' &&
+      (candidate.id || candidate.email)
+        ? candidate
+        : null;
 
     if (!user) {
       try {
-        user = (await getCurrentUser())?.user;
+        user = (await getCurrentUser())?.user ?? null;
       } catch {
         user = null;
       }
     }
 
     setAuth(user ? { user } : null);
-    return user ?? null;
+    return user;
   }, []);
 
   const signOut = useCallback(async () => {

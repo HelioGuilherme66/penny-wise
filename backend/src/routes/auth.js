@@ -278,7 +278,9 @@ router.post('/register', registerLimiter, async (req, res) => {
     }
 
     setAuthCookie(res, user);
-    return res.status(201).json({ success: true, user: sanitizeUser(user) });
+    return res
+      .status(201)
+      .json({ success: true, user: serializeCurrentUser(user) });
   } catch (err) {
     console.log({ err });
     return res.status(500).json({ error: 'Failed to register user' });
@@ -305,7 +307,7 @@ router.post('/login', loginLimiter, async (req, res) => {
     }
 
     setAuthCookie(res, user);
-    return res.json({ success: true, user: sanitizeUser(user) });
+    return res.json({ success: true, user: serializeCurrentUser(user) });
   } catch (err) {
     console.log({ err });
     return res.status(500).json({ error: 'Failed to log in' });
