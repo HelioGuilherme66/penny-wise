@@ -76,7 +76,7 @@ export const getImages = (userId, signal) => {
     console.log(
       `Started getImages userID= ${userId}, ${signal} at lib/api/penny-wise`,
     );
-    const res = axios.get('http://localhost:5001/images');
+    const res = axios.get('http://localhost:5000/api/images');
     console.log(`Returning from getImages data= ${res.body}`);
     return res;
   } catch (err) {
@@ -106,6 +106,11 @@ export const submitLessonPage = (courseId, lessonId, pageId, answer, signal) =>
 export const submitProfile = (body, signal) =>
   putData(
     `/user`,
-    { displayName: body.displayName, country: body.country, bio: body.bio },
+    {
+      displayName: body.displayName,
+      country: body.country,
+      profilePic: body.profilePic,
+      bio: body.bio,
+    },
     getSignal(signal),
   );
