@@ -54,7 +54,7 @@ router.get('/', async (req, res) => {
 
 router.get('/uploads/:imgName', async (req, res) => {
   try {
-    // console.log(`ENTER GET single IMAGES ${req.params.imgName}`);
+    console.log(`ENTER GET single IMAGES ${req.params.imgName}`);
     const image = await Image.find({ path: req.params.imgName });
     // console.log(`GET IMAGES: ${res}  img: ${image}`);
     if (image) {

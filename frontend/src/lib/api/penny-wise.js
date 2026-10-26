@@ -1,5 +1,5 @@
 import { api, normalizeApiError } from './client';
-import axios from 'axios';
+// import axios from 'axios';
 
 function getSignal(signalOrOptions) {
   if (
@@ -76,8 +76,11 @@ export const getImages = (userId, signal) => {
     console.log(
       `Started getImages userID= ${userId}, ${signal} at lib/api/penny-wise`,
     );
+    const res = getData('/images', getSignal(signal));
+    /*
     const res = axios.get('http://localhost:5000/api/images');
-    console.log(`Returning from getImages data= ${res.body}`);
+    */
+    console.log(`Returning from getImages data= ${res}`);
     return res;
   } catch (err) {
     console.error('❌ Fetch error:', err.message);
