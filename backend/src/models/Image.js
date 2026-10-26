@@ -4,6 +4,7 @@ const ImageSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     path: { type: String, required: true },
+    imageData: { type: Buffer, required: true },
   },
   { timestamps: true },
 );

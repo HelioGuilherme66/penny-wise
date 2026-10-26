@@ -6,9 +6,13 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm install -g npm@12.2.0
+RUN npm install -g npm@12.2.1
 
 RUN npm install --omit=dev
+
+ENV UPLOAD_DIR=/tmp/uploads
+
+RUN mkdir -p $UPLOAD_DIR
 
 COPY . .
 
@@ -26,9 +30,13 @@ ENV PORT=5000
 
 COPY package*.json ./
 
-RUN npm install -g npm@12.2.0
+RUN npm install -g npm@12.2.1
 
 RUN npm install
+
+ENV UPLOAD_DIR=/tmp/uploads
+
+RUN mkdir -p $UPLOAD_DIR
 
 COPY . .
 

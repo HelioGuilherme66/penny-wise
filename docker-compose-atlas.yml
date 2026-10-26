@@ -11,6 +11,9 @@ services:
       - "5000:5000"
     environment:
       - MONGODB_URI=${MONGODB_URI:?MONGODB_URI must be set}
+    volumes:
+      - pennywise_uploads:${UPLOAD_DIR:?/tmp/uploads}
+
 
   frontend:
     build:
@@ -24,3 +27,8 @@ services:
       - backend
     ports:
       - "5173:5173"
+    volumes:
+      - pennywise_uploads:${UPLOAD_DIR:?/tmp/uploads}
+
+volumes:
+  pennywise_uploads: {}
