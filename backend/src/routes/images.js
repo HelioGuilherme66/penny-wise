@@ -42,7 +42,7 @@ router.get('/', async (req, res) => {
           await fs.writeFile(`${uploadDir}/${img.path}`, decodedImageData);
         }
       }
-      return res.status(200).json({ imgList });
+      return res.status(200).json(images); // { imgList });
     } else {
       res.status(200).json({ message: 'No images found.' });
     }
@@ -54,9 +54,9 @@ router.get('/', async (req, res) => {
 
 router.get('/uploads/:imgName', async (req, res) => {
   try {
-    console.log(`ENTER GET single IMAGES ${req.params.imgName}`);
+    // console.log(`ENTER GET single IMAGES ${req.params.imgName}`);
     const image = await Image.find({ path: req.params.imgName });
-    // console.log(`GET IMAGES: ${res}  img: ${image}`);
+    console.log(`GET IMAGES: ${res}  img: ${image}`);
     if (image) {
       if (!fileExists(`${uploadDir}/${image.path}`)) {
         var decodedImageData = Buffer.from(image.imageData, 'base64');

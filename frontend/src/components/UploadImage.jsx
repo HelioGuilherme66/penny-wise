@@ -9,11 +9,13 @@ function UploadImage({ callBack, selectedImage, imageFiles }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
 
+  const apiRoot = process.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
   // Fetch images from backend
   const fetchImages = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('http://localhost:5000/api/images');
+      const res = await axios.get(`${apiRoot}/images`);
       setAllImages(res.data);
     } catch (err) {
       console.error('❌ Fetch error:', err.message);
@@ -62,13 +64,9 @@ function UploadImage({ callBack, selectedImage, imageFiles }) {
 
     try {
       setUploading(true);
-      const res = await axios.post(
-        'http://localhost:5000/api/images/upload',
-        formData,
-        {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        },
-      );
+      const res = await axios.post(`${apiRoot}/images/upload`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
 
       <div className='success'>
         <p>`Result: ${res.data.message}`</p>
@@ -140,7 +138,7 @@ function UploadImage({ callBack, selectedImage, imageFiles }) {
             <div className='gallery-item' key={img._id}>
               <img
                 onClick={handleImageSelection}
-                src={`http://localhost:5000/api/images/uploads/${img.path}`}
+                src={`${apiRoot}/images/uploads/${img.path}`}
                 alt={img.name}
                 className='gallery-img'
               />
