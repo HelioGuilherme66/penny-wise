@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CircleUser, Globe, Mail, User } from 'lucide-react';
-import { getCountries, submitProfile } from '../lib/api/penny-wise';
+import { getCountries, getImages, submitProfile } from '../lib/api/penny-wise';
 import PopUp from '../components/PopUp';
 import UploadImage from '../components/UploadImage';
 import { useAuth } from '../lib/useAuth';
@@ -88,32 +88,36 @@ const ProfileForm = ({ user }) => {
   const [country, setCountry] = useState(user.country ?? '');
   const [bio, setBio] = useState(user.bio ?? '');
   const [countries, setCountries] = useState([]);
+  const [images, setImages] = useState([]);
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState(null);
   const [showPopUp, setShowPopUp] = useState(false);
 
-  const loadCountries = useCallback(async (signal) => {
-    setStatus('loading');
-    setError(null);
+  const loadCountries = useCallback(
+    async (signal) => {
+      setStatus('loading');
+      setError(null);
 
-    try {
-      const data = await getCountries(signal);
-      // console.log(data);
-      setCountries(
-        Array.isArray(data?.countries)
-          ? data.countries.map((x) => x.name)
-          : COUNTRY_SUGGESTIONS,
-      );
-      setStatus('ready');
-    } catch (loadError) {
-      if (signal?.aborted || loadError?.code === 'ERR_CANCELED') return;
-      setError(loadError);
-      setStatus('error');
-      if (process.env.NODE_ENV === 'development') {
-        console.log(error);
+      try {
+        const data = await getCountries(signal);
+        // console.log(data);
+        setCountries(
+          Array.isArray(data?.countries)
+            ? data.countries.map((x) => x.name)
+            : COUNTRY_SUGGESTIONS,
+        );
+        setStatus('ready');
+      } catch (loadError) {
+        if (signal?.aborted || loadError?.code === 'ERR_CANCELED') return;
+        setError(loadError);
+        setStatus('error');
+        if (process.env.NODE_ENV === 'development') {
+          console.log(error);
+        }
       }
-    }
-  }, []);
+    },
+    [error],
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -126,27 +130,29 @@ const ProfileForm = ({ user }) => {
     };
   }, [loadCountries]);
 
-  const loadImages = useCallback(async (signal) => {
-    setStatus('loading');
-    setError(null);
+  const loadImages = useCallback(
+    async (signal) => {
+      setStatus('loading');
+      setError(null);
 
-    try {
-      const data = await getImages(user.id, signal);
-      console.log(`ProfilePage Received data: ${data}`);
-      console.log(`First element: ${data[0]}`);
-      setImages(data?.length > 0 ? data.map((x) => x.path) : []);
-
-      console.log(`Images have size =${images.length}`);
-      setStatus('ready');
-    } catch (loadError) {
-      if (signal?.aborted || loadError?.code === 'ERR_CANCELED') return;
-      setError(loadError);
-      setStatus('error');
-      if (process.env.NODE_ENV === 'development') {
-        console.log(error);
+      try {
+        const data = await getImages(user.id, signal);
+        console.log(`ProfilePage Received data: ${data}`);
+        console.log(`First element: ${data[0]}`);
+        setImages(data?.length > 0 ? data.map((x) => x.path) : []);
+        console.log(`Images have size =${images.length}`);
+        setStatus('ready');
+      } catch (loadError) {
+        if (signal?.aborted || loadError?.code === 'ERR_CANCELED') return;
+        setError(loadError);
+        setStatus('error');
+        if (process.env.NODE_ENV === 'development') {
+          console.log(error);
+        }
       }
-    }
-  }, []);
+    },
+    [user.id, error],
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -210,7 +216,7 @@ const ProfileForm = ({ user }) => {
         ? 'Display name must be 100 characters or less.'
         : null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (nameError) {
       setStatus({ state: 'error', message: nameError });
@@ -220,32 +226,25 @@ const ProfileForm = ({ user }) => {
       setStatus({ state: 'success', message: 'No changes to save.' });
       return;
     }
-    signIn({
-      user: {
-        ...user,
-        displayName: trimmedName,
-        country: trimmedCountry,
-        ...(user.role === 'author' ? { bio: trimmedBio } : {}),
-      },
-    });
+    const updates = {
+      displayName: trimmedName,
+      country: trimmedCountry,
+      profilePic: userAvatar,
+      ...(user.role === 'author' ? { bio: trimmedBio } : {}),
+    };
     const controller = new AbortController();
     try {
-      submitProfile(
-        {
-          ...user,
-          userId: user.id,
-          profilePic: userAvatar,
-          displayName: trimmedName,
-          country: trimmedCountry,
-          ...(user.role === 'author' ? { bio: trimmedBio } : {}),
-        },
+      await submitProfile(
+        { ...user, userId: user.id, ...updates },
         controller.signal,
       );
+      signIn({ user: { ...user, ...updates } });
       setStatus({ state: 'success', message: 'Profile saved.' });
     } catch (err) {
       setStatus({
         state: 'error',
-        message: err.message || 'Failed to save profile.',
+        message:
+          err.response?.data?.error || err.message || 'Failed to save profile.',
       });
     }
   };
