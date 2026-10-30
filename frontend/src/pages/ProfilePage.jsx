@@ -151,7 +151,7 @@ const ProfileForm = ({ user }) => {
         }
       }
     },
-    [user.id, error],
+    [user.id, images.length, error],
   );
 
   useEffect(() => {
