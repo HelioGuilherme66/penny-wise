@@ -367,6 +367,15 @@ img.enlarged {
   text-align: center;
 }
 
+.gallery-item.selected {
+  padding: 0.625rem;
+  background-color: var(--bg);
+  border: 3px solid var(--border);
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
 .gallery-img {
   width: 100%;
   height: 180px;

@@ -1,86 +1,102 @@
-import { useState } from 'react'; // useEffect,
+import { useCallback, useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 
-function UploadImage({ callBack, selectedImage, imageFiles }) {
-  const [image, setImage] = useState(null);
-  const [enlargedImage, setEnlargedImage] = useState(selectedImage);
-  const [allImages, setAllImages] = useState(imageFiles);
-  const [loading, setLoading] = useState(false);
+// Vite exposes env vars on import.meta.env, not process.env.
+const API_ROOT =
+  import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+
+const api = axios.create({ baseURL: API_ROOT, withCredentials: true });
+
+export const imageUrl = (id) => `${API_ROOT}/images/${id}/file`;
+
+function UploadImage({ selectedImage, onSelect }) {
+  const [file, setFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const inputRef = useRef(null);
+  const previewRef = useRef(null);
 
-  const apiRoot = process.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
-
-  // Fetch images from backend
-  const fetchImages = async () => {
+  const fetchImages = useCallback(async (signal) => {
     try {
-      setLoading(true);
-      const res = await axios.get(`${apiRoot}/images`);
-      setAllImages(res.data);
+      const { data } = await api.get('/images', { signal });
+      setImages(data.images ?? []);
+      setError('');
     } catch (err) {
-      console.error('❌ Fetch error:', err.message);
-      setError('Failed to fetch images');
+      if (axios.isCancel(err)) return;
+      setError('Failed to load images.');
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
-  };
-
-  // fetchImages();  /// Blocks the loading of page
-
-  /*
-  useEffect(() => {
-    fetchImages();
   }, []);
-  */
 
-  // Select image handler
-  const handleImageSelect = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImage(file);
-      setError('');
-    }
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchImages(controller.signal);
+    return () => controller.abort();
+  }, [fetchImages]);
+
+  // Release the last preview URL when the popup closes.
+  useEffect(
+    () => () => {
+      if (previewRef.current) URL.revokeObjectURL(previewRef.current);
+    },
+    [],
+  );
+
+  const replacePreview = (nextFile) => {
+    if (previewRef.current) URL.revokeObjectURL(previewRef.current);
+    previewRef.current = nextFile ? URL.createObjectURL(nextFile) : null;
+    setPreviewUrl(previewRef.current);
   };
 
-  // Selected image to return
-  const handleImageSelection = (e) => {
-    const imag = e.target.src;
-    if (imag) {
-      setEnlargedImage(imag);
-      callBack(imag);
-      setError('');
-    }
+  const clearFile = () => {
+    setFile(null);
+    replacePreview(null);
+    if (inputRef.current) inputRef.current.value = '';
   };
 
-  // Upload handler
+  const handleFileChange = (e) => {
+    const picked = e.target.files?.[0] ?? null;
+    setMessage('');
+
+    if (picked && picked.size > MAX_IMAGE_BYTES) {
+      setError('Image must be 2 MB or smaller.');
+      clearFile();
+      return;
+    }
+
+    setError('');
+    setFile(picked);
+    replacePreview(picked);
+  };
+
   const handleUpload = async () => {
-    if (!image) {
-      setError('⚠️ Please select an image first!');
+    if (!file) {
+      setError('Please select an image first.');
       return;
     }
 
     const formData = new FormData();
-    formData.append('image', image);
+    formData.append('image', file);
+
+    setUploading(true);
+    setError('');
+    setMessage('');
 
     try {
-      setUploading(true);
-      const res = await axios.post(`${apiRoot}/images/upload`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-
-      <div className='success'>
-        <p>`Result: ${res.data.message}`</p>
-      </div>;
-
-      // Refresh images after upload
-      fetchImages();
-
-      // Reset selected image
-      setImage(null);
-      document.querySelector('input[type="file"]').value = '';
+      // No manual Content-Type: the browser adds the multipart boundary.
+      const { data } = await api.post('/images/upload', formData);
+      setMessage(data.message);
+      setImages((prev) => [data.image, ...prev]);
+      onSelect(imageUrl(data.image._id));
+      clearFile();
     } catch (err) {
-      console.error('❌ Upload error:', err.message);
-      setError('Upload failed, please try again.');
+      setError(err.response?.data?.error || 'Upload failed, please try again.');
     } finally {
       setUploading(false);
     }
@@ -88,63 +104,77 @@ function UploadImage({ callBack, selectedImage, imageFiles }) {
 
   return (
     <div className='popup-container'>
-      {/* Not working, neither here nor at begining <div>{fetchImages()}</div> */}
       <div className='top-container'>
         <div className='selectedImage'>
           {selectedImage && (
             <img
-              src={enlargedImage}
-              alt='Selected Image'
+              src={selectedImage}
+              alt='Selected avatar'
               className='enlarged'
             />
           )}
         </div>
+
         <div className='upload-card'>
           <h1>Image Upload & Preview</h1>
 
-          {/* File Input */}
-          <input type='file' accept='image/*' onChange={handleImageSelect} />
+          <input
+            ref={inputRef}
+            type='file'
+            accept='image/png,image/jpeg,image/gif,image/webp'
+            onChange={handleFileChange}
+          />
 
-          {/* Preview */}
-          {image && (
+          {previewUrl && (
             <div className='preview-container'>
-              <img
-                src={URL.createObjectURL(image)}
-                alt='preview'
-                className='preview-img'
-              />
+              <img src={previewUrl} alt='Preview' className='preview-img' />
             </div>
           )}
 
-          {/* Error Message */}
-          {error && <p className='error-msg'>{error}</p>}
+          {error && (
+            <p role='alert' className='error-msg'>
+              {error}
+            </p>
+          )}
+          {message && <p className='success-msg'>{message}</p>}
 
-          {/* Upload Button */}
           <button
+            type='button'
             className='upload-btn'
             onClick={handleUpload}
-            disabled={uploading}
+            disabled={uploading || !file}
           >
             {uploading ? 'Uploading...' : 'Upload'}
           </button>
         </div>
       </div>
-      {/* Gallery */}
+
       <div className='gallery'>
         {loading ? (
           <p>Loading images...</p>
-        ) : allImages.length > 0 ? (
-          allImages.map((img) => (
-            <div className='gallery-item' key={img._id}>
-              <img
-                onClick={handleImageSelection}
-                src={`${apiRoot}/images/uploads/${img.path}`}
-                alt={img.name}
-                className='gallery-img'
-              />
-              <p>{img.name}</p>
-            </div>
-          ))
+        ) : images.length > 0 ? (
+          images.map((img) => {
+            const url = imageUrl(img._id);
+            const isSelected = url === selectedImage;
+
+            return (
+              <button
+                type='button'
+                key={img._id}
+                onClick={() => onSelect(url)}
+                aria-pressed={isSelected}
+                className={`gallery-item${isSelected ? ' selected' : ''}`}
+              >
+                <img
+                  src={url}
+                  alt={img.name}
+                  loading='lazy'
+                  className='gallery-img'
+                />
+                <p>{img.name}</p>
+              </button>
+            );
+          })
         ) : (
           <p>No images uploaded yet.</p>
         )}

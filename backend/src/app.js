@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
-const path = require('path');
 const cookieParser = require('cookie-parser');
 const coursesRouter = require('./routes/courses');
 const countriesRouter = require('./routes/countries');
@@ -10,7 +9,6 @@ const authRoutes = require('./routes/auth');
 const imagesRouter = require('./routes/images');
 
 const clientOrigin = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
-const uploadDir = process.env.UPLOAD_DIR || path.join(__dirname, 'uploads');
 
 function createApp() {
   const app = express();
@@ -38,9 +36,6 @@ function createApp() {
   app.use('/api/countries', countriesRouter);
   app.use('/api/user', userRouter);
   app.use('/api/images', imagesRouter);
-
-  // Static folder for serving uploaded files
-  app.use('/api/images/uploads', express.static(uploadDir));
 
   app.use((req, res) => {
     res.status(404).json({ error: 'Not found' });

@@ -1,13 +1,16 @@
 const express = require('express');
 const multer = require('multer');
+const mongoose = require('mongoose');
 const path = require('path');
-const fs = require('fs/promises');
 
 const { Image } = require('../models/Image');
+const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
-const uploadDir = process.env.UPLOAD_DIR || path.join(__dirname, 'uploads');
+const MAX_IMAGE_BYTES = 2 * 1024 * 1024; // 2 MB, well under MongoDB's 16 MB document limit
+// SVG is left out on purpose: it can carry scripts.
+const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
 
 class RouteError extends Error {
   constructor(status, message) {
@@ -16,104 +19,106 @@ class RouteError extends Error {
   }
 }
 
-async function fileExists(path) {
-  try {
-    await fs.access(path);
-    // eslint-disable-next-line no-unused-vars
-  } catch (error) {
-    // console.log(`fileExists: ${error}`);
-    return false;
-  }
-  return true;
+// Files are kept in memory and written straight to MongoDB: no disk folder to
+// keep in sync, and nothing is lost when a container restarts.
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_IMAGE_BYTES, files: 1 },
+  fileFilter: (req, file, cb) => {
+    if (ALLOWED_TYPES.includes(file.mimetype)) {
+      return cb(null, true);
+    }
+    return cb(
+      new RouteError(415, 'Only PNG, JPEG, GIF or WebP images are allowed'),
+    );
+  },
+});
+
+function serializeImage(image) {
+  return {
+    _id: image._id,
+    name: image.name,
+    contentType: image.contentType,
+    size: image.size,
+    createdAt: image.createdAt,
+  };
 }
 
+function sendImage(res, image) {
+  if (!image) {
+    throw new RouteError(404, 'Image not found');
+  }
+
+  res.set('Cache-Control', 'public, max-age=31536000, immutable');
+  res.set('X-Content-Type-Options', 'nosniff');
+  res.type(
+    image.contentType || path.extname(image.name) || 'application/octet-stream',
+  );
+  res.send(image.imageData);
+}
+
+// GET /api/images -> metadata only (imageData is select: false)
 router.get('/', async (req, res) => {
-  try {
-    // console.log(`ENTER GET IMAGES: ${req}`);
-    const images = await Image.find().sort({ createdAt: -1 });
-    // console.log(`GET IMAGES: ${res}  img: ${images}`);
-    if (images) {
-      let imgList = [];
-      for (const img of images) {
-        // console.log(`IMAGE PATHS: img: ${uploadDir}/${img.path}`);
-        imgList.push(`${uploadDir}/${img.path}`);
-        if (!fileExists(`${uploadDir}/${img.path}`)) {
-          var decodedImageData = Buffer.from(img.imageData, 'base64');
-          await fs.writeFile(`${uploadDir}/${img.path}`, decodedImageData);
-        }
-      }
-      return res.status(200).json(images); // { imgList });
-    } else {
-      res.status(200).json({ message: 'No images found.' });
-    }
-  } catch (error) {
-    console.error('Fetch error:', error.message);
-    res.status(500).json({ message: '❌ Failed to fetch images' });
+  const images = await Image.find().sort({ createdAt: -1 }).lean();
+  res.json({ images: images.map(serializeImage) });
+});
+
+// GET /api/images/uploads/:fileName -> legacy URLs from the old disk flow
+router.get('/uploads/:fileName', async (req, res) => {
+  const image = await Image.findOne({ path: req.params.fileName }).select(
+    '+imageData',
+  );
+  sendImage(res, image);
+});
+
+// GET /api/images/:id/file -> the image bytes, usable directly in <img src>
+router.get('/:id/file', async (req, res) => {
+  if (!mongoose.isObjectIdOrHexString(req.params.id)) {
+    throw new RouteError(400, 'Invalid image id');
   }
+
+  const image = await Image.findById(req.params.id).select('+imageData');
+  sendImage(res, image);
 });
 
-router.get('/uploads/:imgName', async (req, res) => {
-  try {
-    // console.log(`ENTER GET single IMAGES ${req.params.imgName}`);
-    const image = await Image.find({ path: req.params.imgName });
-    console.log(`GET IMAGES: ${res}  img: ${image}`);
-    if (image) {
-      if (!fileExists(`${uploadDir}/${image.path}`)) {
-        var decodedImageData = Buffer.from(image.imageData, 'base64');
-        await fs.writeFile(`${uploadDir}/${image.path}`, decodedImageData);
-      }
-      return res.status(200).json({ image });
-    } else {
-      res.status(200).json({ message: 'Image not found.' });
-    }
-  } catch (error) {
-    console.error('Fetch error:', error.message);
-    res.status(500).json({ message: '❌ Failed to fetch image' });
-  }
-});
-
-// Multer config
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}${path.extname(file.originalname)}`);
-  },
-});
-
-const upload = multer({ storage: storage });
-
-// Routes
-router.post('/upload', upload.single('image'), async (req, res) => {
-  try {
+// POST /api/images/upload (multipart/form-data, field name "image")
+router.post(
+  '/upload',
+  requireAuth,
+  upload.single('image'),
+  async (req, res) => {
     if (!req.file) {
-      return res.status(400).json({ message: 'No file uploaded!' });
+      throw new RouteError(400, 'No file uploaded');
     }
 
-    const data = await fs.readFile(path.join(uploadDir, req.file.filename));
-    // const imageData = serialize(data);
-    const newImage = new Image({
+    const image = await Image.create({
       name: req.file.originalname,
-      path: req.file.filename,
-      imageData: data,
+      contentType: req.file.mimetype,
+      size: req.file.size,
+      owner: req.user.id,
+      imageData: req.file.buffer,
     });
-    console.log(`IMAGES UPLOAD: new image=${newImage.path}`);
-    await newImage.save();
 
     res.status(201).json({
-      message: '✅ Image uploaded successfully!',
-      image: newImage,
+      message: 'Image uploaded successfully',
+      image: serializeImage(image),
     });
-  } catch (error) {
-    console.error('Upload error:', error.message);
-    res.status(500).json({ message: '❌ Server error during upload' });
-  }
-});
+  },
+);
 
+// Express 5 forwards errors thrown in async handlers here automatically.
 router.use((error, req, res, next) => {
   if (error instanceof RouteError) {
     return res.status(error.status).json({ error: error.message });
+  }
+
+  if (error instanceof multer.MulterError) {
+    const status = error.code === 'LIMIT_FILE_SIZE' ? 413 : 400;
+    const message =
+      error.code === 'LIMIT_FILE_SIZE'
+        ? 'Image must be 2 MB or smaller'
+        : error.message;
+    return res.status(status).json({ error: message });
   }
 
   return next(error);
