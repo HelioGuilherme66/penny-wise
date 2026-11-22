@@ -1,6 +1,7 @@
 const request = require('supertest');
 const { createApp } = require('../app');
 const { setupTestDB, teardownTestDB, clearTestDB } = require('./setup');
+const { checkRole } = require('../middleware/auth');
 
 const app = createApp();
 
@@ -83,42 +84,42 @@ describe('POST /api/auth/register', () => {
     expect(res.status).toBe(201);
     expect(res.body.user.role).toBe('learner');
   });
-});
 
-it('registers author with the correct invite code', async () => {
-  const res = await request(app).post('/api/auth/register').send({
-    email: 'test@gmail.com',
-    password: 'fake1234',
-    displayName: 'Testy',
-    authorInviteCode: process.env.AUTHOR_SECRET_CODE,
+  it('registers author with the correct invite code', async () => {
+    const res = await request(app).post('/api/auth/register').send({
+      email: 'test@gmail.com',
+      password: 'fake1234',
+      displayName: 'Testy',
+      authorInviteCode: process.env.AUTHOR_SECRET_CODE,
+    });
+
+    expect(res.status).toBe(201);
+    expect(res.body.user.role).toBe('author');
   });
 
-  expect(res.status).toBe(201);
-  expect(res.body.user.role).toBe('author');
-});
+  it('returns error with incorrect author invite code', async () => {
+    const res = await request(app).post('/api/auth/register').send({
+      email: 'test2@gmail.com',
+      password: 'fake1234',
+      displayName: 'Testy',
+      authorInviteCode: 'FAKECODE',
+    });
 
-it('returns error with incorrect author invite code', async () => {
-  const res = await request(app).post('/api/auth/register').send({
-    email: 'test2@gmail.com',
-    password: 'fake1234',
-    displayName: 'Testy',
-    authorInviteCode: 'FAKECODE',
+    expect(res.status).toBe(400);
   });
 
-  expect(res.status).toBe(400);
-});
+  it('rejects displayName longer than 100 characters', async () => {
+    const longName = 'A'.repeat(101);
 
-it('rejects displayName longer than 100 characters', async () => {
-  const longName = 'A'.repeat(101);
+    const res = await request(app).post('/api/auth/register').send({
+      email: 'testlong@example.com',
+      password: 'password123',
+      displayName: longName,
+    });
 
-  const res = await request(app).post('/api/auth/register').send({
-    email: 'testlong@example.com',
-    password: 'password123',
-    displayName: longName,
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('display name must be 100 characters or less');
   });
-
-  expect(res.status).toBe(400);
-  expect(res.body.error).toBe('display name must be 100 characters or less');
 });
 
 describe('POST /api/auth/login', () => {
@@ -187,5 +188,72 @@ describe('POST /api/auth/login', () => {
     });
 
     expect(res.status).toBe(401);
+  });
+});
+
+describe('checkRole middleware (unit)', () => {
+  function mockRes() {
+    const res = {};
+    res.status = jest.fn().mockReturnValue(res);
+    res.json = jest.fn().mockReturnValue(res);
+    return res;
+  }
+
+  let res;
+  let next;
+
+  beforeEach(() => {
+    res = mockRes();
+    next = jest.fn();
+  });
+
+  it('returns 401 when req.user is missing', () => {
+    const req = {};
+
+    checkRole('author')(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({ message: 'Not authenticated.' });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('returns 403 when the user role is not allowed', () => {
+    const req = { user: { id: '1', role: 'learner' } };
+
+    checkRole('author', 'admin')(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith({
+      message:
+        'Access denied. Required role: author or admin. Your role: learner',
+    });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('calls next when the user has an allowed role', () => {
+    const req = { user: { id: '1', role: 'author' } };
+
+    checkRole('author')(req, res, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalled();
+  });
+
+  it('accepts any one of several allowed roles', () => {
+    const req = { user: { id: '1', role: 'author' } };
+
+    checkRole('author', 'learner')(req, res, next);
+
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+
+  it('denies everyone when no roles are allowed', () => {
+    const req = { user: { id: '1', role: 'author' } };
+
+    checkRole()(req, res, next);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(next).not.toHaveBeenCalled();
   });
 });
