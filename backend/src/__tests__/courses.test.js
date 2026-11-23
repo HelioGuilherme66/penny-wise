@@ -57,6 +57,22 @@ describe('POST /api/courses', () => {
     expect(res.body.error).toBe('Course name is required');
   });
 
+  it('rejects a course with wrong name type', async () => {
+    const agent = request.agent(app);
+    const registerRes = await agent.post('/api/auth/register').send({
+      email: 'author2@example.com',
+      password: 'password123',
+      displayName: 'Author User 2',
+      authorInviteCode: process.env.AUTHOR_SECRET_CODE,
+    });
+
+    const res = await agent.post('/api/courses').send({ name: 123 });
+
+    expect(registerRes.status).toBe(201);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('Course name is required');
+  });
+
   it('rejects a learner from creating a course', async () => {
     const agent = request.agent(app);
     const registerRes = await agent.post('/api/auth/register').send({
@@ -71,5 +87,24 @@ describe('POST /api/courses', () => {
 
     expect(registerRes.status).toBe(201);
     expect(res.status).toBe(403);
+  });
+
+  it('rejects a course for unknown author', async () => {
+    const agent = request.agent(app);
+
+    const res = await agent
+      .post('/api/courses')
+      .send({
+        name: 'Personal Finance Basics',
+        user: {
+          _id: '6af6698d5b805a435eee69d0',
+          displayName: 'Unknown Test Author',
+        },
+      });
+
+    console.log(res);
+    expect(res.status).toBe(401);
+    expect(res.body.course).toBeUndefined();
+    expect(res.body.error).toBe('User is not authenticated with authCookie');
   });
 });
