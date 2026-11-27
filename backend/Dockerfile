@@ -3,7 +3,7 @@ FROM node:22-slim AS prod
 RUN apt update && apt --no-install-recommends install -y curl && apt clean \
   && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* && \
   addgroup --system nonroot && adduser --system --group nonroot && \
-  npm install --ignore-scripts -g npm@12.2.2
+  npm install --ignore-scripts -g npm@12.2.3
 
 WORKDIR /app
 
@@ -28,7 +28,7 @@ FROM node:22-slim AS dev
 RUN apt update && apt --no-install-recommends install -y curl && apt clean \
   && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* && \
   addgroup --system nonroot && adduser --system --group nonroot && \
-  npm install --ignore-scripts -g npm@12.2.2
+  npm install --ignore-scripts -g npm@12.2.3
 
 WORKDIR /src
 
