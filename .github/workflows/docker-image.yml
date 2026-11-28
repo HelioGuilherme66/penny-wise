@@ -3,8 +3,6 @@ name: Test Penny Wise
 on:
   push:
     branches: ["main"]
-  pull_request:
-    branches: ["main"]
 
 jobs:
   build:

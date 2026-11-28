@@ -1,0 +1,46 @@
+name: Test Penny Wise Pull Requests
+
+on:
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+        name: Testing
+        deployment: false
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Free build runner space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/graalvm
+          docker system prune -af --volumes || true
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Build Atlas MongoDB URI and JWT_SECRET
+        env:
+          ATLAS_USER: ${{ secrets.ATLAS_USER }}
+          ATLAS_PASSWORD: ${{ secrets.ATLAS_PASSWORD }}
+          ATLAS_CLUSTER: ${{ secrets.ATLAS_CLUSTER }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        run: |
+          echo "MONGODB_URI=mongodb+srv://${ATLAS_USER}:${ATLAS_PASSWORD}@${ATLAS_CLUSTER}/pennywise?retryWrites=true&w=majority" >> $GITHUB_ENV
+          echo "JWT_SECRET=${JWT_SECRET}" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: npm install --ignore-scripts --legacy-peer-deps --prefer-offline
+
+      - name: Run backend and frontend tests
+        env:
+          AUTHOR_SECRET_CODE: ${{ secrets.AUTHOR_SECRET_CODE }}
+        run: npm run tests
+
