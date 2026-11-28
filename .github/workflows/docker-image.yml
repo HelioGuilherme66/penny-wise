@@ -15,7 +15,7 @@ jobs:
         deployment: false
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Free build runner space
         run: |
